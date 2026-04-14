@@ -1,9 +1,3 @@
-// This is your Prisma schema file,
-// learn more about it in the docs: https://pris.ly/d/prisma-schema
-
-// Looking for ways to speed up your queries, or scale easily with your serverless or edge functions?
-// Try Prisma Accelerate: https://pris.ly/cli/accelerate-init
-
 generator client {
   provider = "prisma-client-js"
 }
@@ -13,20 +7,177 @@ datasource db {
   url      = env("DATABASE_URL")
 }
 
-model User {
-  id        String   @id @default(cuid())
-  email     String   @unique
-  name      String?
-  createdAt DateTime @default(now())
+model InsuranceCompany {
+  id               String  @id @default(cuid())
+  name             String
+  folderName       String  @unique
+  senderDomains    String  // JSON array of domains
+  isActive         Boolean @default(true)
+  createdAt        DateTime @default(now())
+  updatedAt        DateTime @updatedAt
+  claims           Claim[]
+  learningPatterns LearningPattern[]
+}
+
+model Claim {
+  id                  String   @id @default(cuid())
+  claimNumber         String   @unique
+  clientName          String
+  insuranceCompanyId  String?
+  insuranceCompany    InsuranceCompany? @relation(fields: [insuranceCompanyId], references: [id])
+  claimType           String   // Motor, Building, Marine, Agricultural, Household, Liability
+  status              String   @default("NEW") // NEW, PROCESSING, COMPLETED, MANUAL_REVIEW, FAILED, PENDING_REVIEW
+  senderEmail         String?
+  emailSubject        String?
+  contactNumber       String?
+  contactEmail        String?
+  incidentDescription String?
+  excessAmount        String?
+  specialInstructions String?
+  folderPath          String?
+  vehicleMake         String?
+  vehicleModel        String?
+  vehicleYear         String?
+  vehicleRegistration String?
+  propertyAddress     String?
+  attachmentsCount    Int      @default(0)
+  documentsPrinted    Boolean  @default(false)
+  confidenceScore     Int      @default(0)
+  aiClassification    String?  // NEW_CLAIM, IGNORE, MISSING_INFO, OTHER
+  aiClassificationConfidence Int @default(0)
+  processingStage     String   @default("RECEIVED") // RECEIVED, CLASSIFIED, EXTRACTED, FOLDER_CREATED, DOCUMENTS_SAVED, PRINTED, LOGGED, RESPONDED
+  needsAttention      Boolean  @default(false) // Flagged for low confidence or user-flagged issues
+  verifiedByUser      Boolean  @default(false) // User has confirmed data is correct
+  reviewedAt          DateTime? // When the user reviewed this claim
+  reviewAction        String?  // "accepted", "corrected", "flagged_for_review", "skipped"
+  aiHintsUsed         String?  // JSON: list of learning hints applied during extraction
+  // Multi-Agent System fields
+  aiDecision          String?  // "auto_classify", "needs_review", "manual_review"
+  aiReasoning         String?  // AI's reasoning for classification
+  aiConfidenceBreakdown String? // JSON: { classification: 85, extraction: 72, overall: 77 }
+  aiAlternatives      String?  // JSON: [{ class: "Motor", score: 0.7 }, ...]
+  notes               String?
+  processedAt         DateTime?
+  createdAt           DateTime @default(now())
+  updatedAt           DateTime @updatedAt
+  auditLogs           AuditLog[]
+  printQueueItems     PrintQueueItem[]
+  feedback            ClaimFeedback[]
+  predictions         Prediction[]
+  extractedEntities   ExtractedEntity[]
+}
+
+// ─── Multi-Agent Prediction System ────────────────────────────────────────────
+// Stores full AI predictions with alternatives, reasoning, and decision routing.
+// Each claim can have one prediction record tracking the classification agent's output.
+
+model Prediction {
+  id                  String   @id @default(cuid())
+  claimId             String
+  claim               Claim    @relation(fields: [claimId], references: [id])
+  predictedClass      String   // "NEW_CLAIM", "IGNORE", "MISSING_INFO", "OTHER"
+  confidence          Float    // 0.0 to 1.0
+  alternatives        String   // JSON: [{ class: "New Claim", score: 0.7 }, ...]
+  reasoning           String?  // AI's explanation for the classification
+  decision            String   // "auto_classify", "needs_review", "manual_review"
+  decisionReasoning   String?  // Why the decision engine chose this action
+  learningHintsCount  Int      @default(0) // How many learning patterns were injected
+  createdAt           DateTime @default(now())
+}
+
+// ─── Extracted Entities ───────────────────────────────────────────────────────
+// Stores preprocessed signals extracted from emails before classification.
+// These are the raw signals the classification agent uses.
+
+model ExtractedEntity {
+  id                  String   @id @default(cuid())
+  claimId             String
+  claim               Claim    @relation(fields: [claimId], references: [id])
+  possibleClaimNumber String?  // Extracted claim reference
+  personNames         String?  // JSON array: ["John Doe", "Jane Smith"]
+  dates               String?  // JSON array: ["2024-01-15", "15 Jan 2024"]
+  keywords            String?  // JSON array: ["assessment", "motor", "claim"]
+  cleanedBody         String?  // Cleaned email body (signatures, disclaimers removed)
+  createdAt           DateTime @default(now())
+}
+
+model ClaimFeedback {
+  id              String   @id @default(cuid())
+  claimId         String
+  claim           Claim    @relation(fields: [claimId], references: [id])
+  feedbackType    String   // "confirmed_correct", "flagged_incorrect", "field_corrected"
+  fieldName       String?  // which field was corrected (null = overall confirmation)
+  originalValue   String?  // what AI originally extracted
+  correctedValue  String?  // what user changed it to
+  aiConfidence    Int?     // confidence at time of feedback
+  processingStage String?  // stage at time of feedback
+  learningSignal  String?  // "increase_weight", "decrease_weight", "neutral"
+  reviewedBy      String?  // user identifier who submitted the feedback
+  createdAt       DateTime @default(now())
+}
+
+model AuditLog {
+  id               String   @id @default(cuid())
+  claimId          String?
+  claim            Claim?   @relation(fields: [claimId], references: [id])
+  action           String
+  details          String?
+  status           String   @default("SUCCESS") // SUCCESS, WARNING, ERROR
+  processedBy      String?  // AUTO, MANUAL
+  createdAt        DateTime @default(now())
+}
+
+model PrintQueueItem {
+  id          String   @id @default(cuid())
+  claimId     String?
+  claim       Claim?   @relation(fields: [claimId], references: [id])
+  fileName    String
+  filePath    String?
+  printStatus String   @default("QUEUED") // QUEUED, PRINTING, COMPLETED, FAILED
+  pages       Int?
+  createdAt   DateTime @default(now())
+  printedAt   DateTime?
+  error       String?
+}
+
+model SystemConfig {
+  id    String @id @default(cuid())
+  key   String @unique
+  value String
   updatedAt DateTime @updatedAt
 }
 
-model Post {
-  id        String   @id @default(cuid())
-  title     String
-  content   String?
-  published Boolean  @default(false)
-  authorId  String
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
+model WorkflowStage {
+  id          String   @id @default(cuid())
+  stageKey    String   @unique
+  label       String
+  description String
+  icon        String
+  color       String
+  sortOrder   Int      @default(0)
+  isEnabled   Boolean  @default(true)
+  config      String   @default("{}")
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+}
+
+// ─── Self-Learning System ────────────────────────────────────────────────────────
+// The system learns from user corrections to improve future AI extraction accuracy.
+// When a user corrects a field (e.g., client name), a LearningPattern is created
+// that is injected into future AI prompts for emails from the same sender domain.
+
+model LearningPattern {
+  id                  String   @id @default(cuid())
+  senderDomain        String   // email domain that sent the claim (e.g., "santam.co.za")
+  insuranceCompanyId  String?
+  insuranceCompany    InsuranceCompany? @relation(fields: [insuranceCompanyId], references: [id])
+  fieldName           String   // which claim field this pattern is for
+  patternHint         String   // human-readable hint injected into AI prompt
+  exampleOriginal     String?  // what AI originally extracted (before correction)
+  exampleCorrected    String?  // what the user corrected it to
+  correctionCount     Int      @default(1) // how many times this correction was confirmed
+  confidence          Int      @default(50) // derived confidence (more corrections = higher trust)
+  lastAppliedAt       DateTime?
+  createdAt           DateTime @default(now())
+  updatedAt           DateTime @updatedAt
 }
