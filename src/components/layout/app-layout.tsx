@@ -125,15 +125,8 @@ function SidebarNav({
                     onClick={() => {
                       onItemClick(item.id)
                     }}
-                    className={`relative flex items-center gap-3 rounded-lg px-4 py-2.5 text-[15px] font-medium transition-all duration-200 cursor-pointer nav-indicator w-full link-animated hover-underline-center btn-press ${
-                      isActive
-                        ? 'bg-primary/8 text-primary sidebar-active-glow shadow-glow nav-item-active sidebar-active-indicator'
-                        : 'text-muted-foreground hover:bg-muted/40 hover:text-foreground hover:pl-5 transition-colors'
-                    }`}
+                    className={`sidebar-nav-item ${isActive ? 'sidebar-active-item' : ''}`}
                   >
-                    {isActive && (
-                      <div className="absolute left-0 top-1/2 -translate-y-1/2 w-1 h-6 bg-primary rounded-r-full shadow-[0_0_8px_oklch(0.72_0.12_165/30%)] nav-active-indicator" />
-                    )}
                     <Icon className="size-5 shrink-0" />
                     <span className="truncate">{item.label}</span>
                     {showBadge && (
@@ -454,7 +447,7 @@ function TopHeader() {
               <Input
                 ref={searchInputRef}
                 placeholder="Search claims..."
-                className="pl-9 pr-4 w-full h-10 text-sm focus-visible:ring-1 focus-ring-primary"
+                className="pl-9 pr-4 w-full h-10 text-sm focus-visible:ring-1 focus-ring-primary modern-input"
                 value={headerSearch}
                 onChange={(e) => setHeaderSearch(e.target.value)}
                 onKeyDown={handleHeaderSearch}
@@ -467,7 +460,7 @@ function TopHeader() {
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 size-5 text-muted-foreground" />
             <Input
               placeholder="Search claims..."
-              className="pl-9 pr-16 w-72 h-10 text-sm focus-visible:ring-1 focus-modern input-focus focus-ring-primary"
+              className="pl-9 pr-16 w-72 h-10 text-sm focus-visible:ring-1 focus-modern input-focus focus-ring-primary modern-input"
               value={headerSearch}
               onChange={(e) => setHeaderSearch(e.target.value)}
               onKeyDown={handleHeaderSearch}

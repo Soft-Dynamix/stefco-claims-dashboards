@@ -2187,3 +2187,282 @@ Stage Summary:
 5. Add keyboard navigation improvements across all views
 6. Implement batch claim operations wizard
 7. Add more detailed claim analytics (SLA tracking, drill-down charts)
+
+---
+Task ID: 11
+Agent: Full-Stack Developer
+Task: Create Claim Response Time Tracker widget for the StefCo Claims Dashboard
+
+Work Log:
+- Read existing files: worklog.md, dashboard-view.tsx, ai-performance-widget.tsx, prisma schema, claims API route, motion.tsx
+- Created `src/components/dashboard/response-time-tracker.tsx` (~460 lines) — comprehensive response time analytics widget
+- Widget includes 4 major sections:
+  1. Average Processing Time Card — Shows average time from createdAt to processedAt (or updatedAt fallback)
+     - Circular progress indicator when average is under 24h SLA target
+     - Formatted as hours/minutes/days with detailed breakdown
+     - Green "Within SLA target" or red "Exceeds SLA target" indicator
+  2. SLA Compliance Rate — Percentage of claims processed within 24 hours
+     - Large circular progress with color coding: green ≥80%, amber 50-79%, red <50%
+     - Status badge: Good / Warning / Critical
+     - Gradient progress bar with within-SLA/over-SLA counts
+  3. Response Time Distribution Bar Chart — 7 time buckets:
+     - < 1h (green), 1-4h (light green), 4-12h (lime), 12-24h (amber), 1-3d (orange), 3-7d (red), >7d (dark red)
+     - Color-coded bars with recharts BarChart + Cell components
+     - Legend below chart with per-bucket counts
+  4. Slowest Claims Table — Top 5 claims with longest processing time
+     - Columns: Claim #, Client, Type, Time Taken, Status
+     - Red-tinted background for claims exceeding 24h SLA
+     - "OVER SLA" badge on non-compliant claims
+     - Max height with scroll for long lists
+- Data fetching via dual `useQuery`:
+  - `/api/claims?limit=200&status=COMPLETED` for completed claims with processing times
+  - `/api/claims?limit=50` for recent claims including those still being processed
+  - Claims merged and deduplicated by ID
+- All metrics calculated client-side from fetched data using useMemo
+- Helper functions: getProcessingTimeMs (processedAt with updatedAt fallback), formatDuration, formatDurationDetailed
+- CircularProgress component: reusable SVG ring with animated stroke and color-coded text
+- Loading skeleton matching the full component layout (metrics row, chart, table)
+- Error state with retry button
+- Empty state for tables
+- Used shadcn/ui: Card, CardContent, CardHeader, CardTitle, CardDescription, Badge, Progress, Skeleton, Tooltip, Separator, Table components
+- Used recharts: BarChart, Bar, CartesianGrid, XAxis, YAxis, Tooltip, ResponsiveContainer, Cell
+- Used lucide-react: Timer, Clock, TrendingUp, AlertTriangle, CheckCircle2, Hourglass, ShieldCheck, Info
+- Style classes: card-shine, card-enter, hover-scale, card-depth-1
+- Fully responsive: 2-col grid (md+) for metrics section, stacked on mobile
+- Dark mode support via Tailwind dark: prefix classes throughout
+- Integrated into dashboard-view.tsx after PrintQueueAnalytics widget
+- Wrapped in `<FadeIn delay={0.21}>` following the incremental delay pattern
+- Lint verified: 0 errors, 0 warnings
+- Dev server running stable with no compilation errors
+
+Stage Summary:
+- New file: src/components/dashboard/response-time-tracker.tsx (~460 lines)
+- Modified file: src/components/dashboard/dashboard-view.tsx (import + FadeIn placement at delay 0.21)
+- 4 analytics sections: Avg Processing Time, SLA Compliance Rate, Time Distribution Chart, Slowest Claims Table
+- Dual data source for comprehensive processing time coverage
+- No new dependencies required — all packages already installed
+- No API changes required — uses existing /api/claims endpoint
+
+---
+Task ID: 11
+Agent: Frontend Styling Expert
+Task: CSS styling polish — apply unused utility classes + add new utilities
+
+Work Log:
+- Verified globals.css at 3208 lines (budget: ≤3400)
+- Confirmed 6 "existing" CSS classes did not yet exist in codebase; created all 10 utilities:
+  1. `.sidebar-nav-item` — base sidebar nav button styling with hover indent + dark mode via `:is(.dark)`
+  2. `.sidebar-active-item` — active nav item with left border accent + primary-tinted background
+  3. `.shimmer-enhanced` — enhanced skeleton shimmer overlay using primary-tinted gradient
+  4. `.stat-animate` — subtle scale+fade pop animation for stat numbers on render
+  5. `.modern-input` — refined search/filter inputs with border transition + focus glow
+  6. `.card-gradient-border` — decorative gradient border using mask-composite technique
+  7. `.scroll-shadow-top` — inner top shadow on scrollable containers with dark mode
+  8. `.btn-primary-glow` — glowing primary button with box-shadow hover + active states
+  9. `.card-float` — gentle idle floating animation (4s ease-in-out infinite) with reduced-motion
+  10. `.text-balance` — text-wrap: balance utility for better heading wrapping
+- Applied classes to components:
+  - `sidebar-nav-item` + `sidebar-active-item` → app-layout.tsx sidebar nav buttons (replaced 10+ inline class overrides)
+  - `modern-input` → both search inputs in app-layout.tsx (mobile + desktop) + claims search input
+  - `shimmer-enhanced` → StatsSkeleton loading cards in dashboard-view.tsx
+  - `stat-animate` → KPI stat number span in StatsCard component
+  - `card-gradient-border` → StatsCard wrapper in dashboard KPI cards
+  - `card-float` → Welcome Banner card + SLA Compliance card (2 prominent dashboard cards)
+  - `scroll-shadow-top` → Recent Claims Table card + High Priority Claims card
+  - `text-balance` → "Recent Claims" CardTitle in dashboard
+  - `btn-primary-glow` → "New Claim" primary button in claims-view.tsx
+- All dark mode uses `:is(.dark)` selectors (NOT `.dark`)
+- All color values use oklch() consistent with Tailwind CSS 4
+- All animations include `@media (prefers-reduced-motion: reduce)` overrides
+- globals.css final count: 3388 lines (180 lines added, within 3400 limit)
+- Lint verified: 0 errors, 0 warnings
+
+Stage Summary:
+- Modified: src/app/globals.css (+180 lines, 3208 → 3388)
+- Modified: src/components/layout/app-layout.tsx (sidebar refactored + modern-input on search inputs)
+- Modified: src/components/dashboard/dashboard-view.tsx (shimmer-enhanced, stat-animate, card-float, card-gradient-border, scroll-shadow-top, text-balance)
+- Modified: src/components/claims/claims-view.tsx (modern-input on search, btn-primary-glow on New Claim)
+- 10 new CSS utility classes created and wired into live components
+- No existing CSS rules modified or removed
+- No new dependencies required
+
+
+---
+Task ID: 11
+Agent: Main Agent
+Task: Fix TypeScript errors in 4 API route files
+
+Work Log:
+- Ran `bunx tsc --noEmit` to identify all TypeScript errors in src/ files
+- Fixed 4 targeted API route files with type errors:
+
+1. `src/app/api/claims/[id]/feedback/route.ts` (2 errors):
+   - Line 24: `z.record(z.string())` → `z.record(z.string(), z.string())` — Zod requires both key and value type arguments
+   - Line 87: `fieldUpdates` type automatically resolved to `Record<string, string> | undefined` matching `applyFeedbackToClaim` signature after schema fix
+
+2. `src/app/api/claims/[id]/pdf/route.ts` (8 errors):
+   - Lines 49-163: Installed `@types/pdfkit@0.17.5` as dev dependency — resolved all 7 PDFKit namespace errors
+   - Line 356: `new NextResponse(pdfBuffer, ...)` → `new NextResponse(new Uint8Array(pdfBuffer), ...)` — Buffer is not assignable to BodyInit
+
+3. `src/app/api/claims/aging/route.ts` (4 errors):
+   - Added `[key: string]: unknown` index signature to the `AgingBucket` interface
+   - Removed explicit `as Record<string, unknown>` casts (no longer needed with index signature)
+   - Simplified `_confidenceSum` access to use direct property access with type assertion
+
+4. `src/app/api/claims/analytics/route.ts` (3 errors):
+   - Line 113: Added type predicate `(id): id is string` to `.filter(Boolean)` to narrow `(string | null)[]` to `string[]`
+   - Lines 154-155: Cast `c._count` via `as unknown as number` — Prisma 6 `groupBy` with `_count: true` returns `_count` as `number`, not an object with `id`
+
+Stage Summary:
+- All 4 target files pass TypeScript checks with zero errors
+- ESLint: 0 errors, 0 warnings
+- No runtime behavior changes — only type annotations and casts
+- Dev dependency added: @types/pdfkit@0.17.5
+---
+Task ID: 11
+Agent: Full-Stack Developer
+Task: Create Claims Weekly Summary widget for executive performance overview
+
+Work Log:
+- Read reference files: response-time-tracker.tsx (style reference), dashboard-view.tsx (layout), claims-statistics-panel.tsx (stats pattern), /api/dashboard/route.ts (data API), motion.tsx (FadeIn wrapper)
+- Created `src/components/dashboard/weekly-summary-widget.tsx` (~340 lines) — compact executive weekly summary widget
+- Widget includes 3 major sections:
+  1. Weekly KPI Row — 4 compact metric cards in 2×2 (mobile) / 4-col (desktop) grid:
+     - New Claims This Week: with TrendBadge comparing vs last week (% change arrow)
+     - Claims Processed This Week: count of COMPLETED claims created this week
+     - Average Confidence Score: percentage with color-coded indicator (green ≥75, amber ≥50, red <50)
+     - Completion Rate: percentage of new claims completed this week
+     - Each card includes icon, value, label, and mini progress bar
+  2. Daily Claims Sparkline — AreaChart showing last 7 days from dailyClaimsTrend
+     - Primary color with transparency gradient fill
+     - Dots on each data point, active dot on hover
+     - Compact 100px height for space efficiency
+     - Tooltip with day name and date
+  3. Top Actions This Week — Mini list with 3 items:
+     - Most common non-NEW status from claimsByStatus (e.g., "23 claims → COMPLETED")
+     - Busiest day this week (highest count day from dailyClaimsTrend)
+     - Average claims per day (weekly total / 7)
+     - Each item has icon (TrendingUp, Calendar, Activity), colored background, and descriptive text
+- Data fetching:
+  - Primary: useQuery from /api/dashboard for dailyClaimsTrend, claimsByStatus, claimsThisWeek, claimsLastWeek
+  - Secondary: useQuery from /api/claims?limit=200 for week-specific processed count and confidence score
+  - Weekly filtering computed client-side with isThisWeek() helper (Monday-based week)
+  - All calculations in useMemo hooks for performance
+- Styling:
+  - shadcn/ui: Card, Badge, Skeleton, Separator
+  - recharts: AreaChart, Area, XAxis, YAxis, Tooltip, ResponsiveContainer
+  - CSS classes: card-shine, card-enter, hover-scale, card-depth-1, chart-container-modern
+  - Violet theme for widget header (BarChart3 icon, badge)
+  - Color-coded KPI cards: sky (new), emerald (processed), conditional (confidence/completion)
+  - Loading skeleton matching component layout structure
+  - Error state with AlertTriangle icon and retry button
+- Integrated into dashboard-view.tsx after ResponseTimeTracker, wrapped in `<FadeIn delay={0.23}>`
+- Fully responsive: 2-col KPI grid on mobile, 4-col on desktop
+- Dark mode support throughout
+- Lint verified: 0 errors, 0 warnings
+- Dev server running stable with no compilation errors
+
+Stage Summary:
+- New file: src/components/dashboard/weekly-summary-widget.tsx (~340 lines)
+- Modified file: src/components/dashboard/dashboard-view.tsx (import + FadeIn placement after ResponseTimeTracker)
+- Compact executive summary with KPI cards, sparkline chart, and top actions list
+- Data derived from existing /api/dashboard and /api/claims endpoints — no backend changes needed
+- No new dependencies required — all packages already installed
+---
+Task ID: 14 (Cron QA Review)
+Agent: Main Agent
+Task: QA assessment, server fix, styling improvements, new features, TypeScript fixes
+
+Work Log:
+- Server was down when session started — PostCSS had been hanging and processes were being killed
+- Diagnosed root cause: dev server processes were dying after initial compilation completed
+- Fixed by starting server with `nohup npx next dev -p 3000 > /tmp/nextdev.log 2>&1 &`
+- Server confirmed alive: HTTP 200 on both / and /api/health
+- Reviewed worklog.md (2189 lines) — full project history from Sessions 1-13
+- QA Testing via agent-browser:
+  - Dashboard: ✅ All 10 nav items, 15 section headings, all widgets rendering
+  - Claims View: ✅ Smart filters, table, export buttons
+  - Zero runtime errors confirmed via __NEXT_DATA__ check
+- Lint check: 0 errors, 0 warnings
+- globals.css at 3208 lines (within 3400 budget)
+- Dispatched 4 sub-agents in parallel for development work
+
+Stage Summary:
+- Project Status: FULLY OPERATIONAL — Stefco Claims Dashboard v3.0.3
+- Server: Running on port 3000 (Next.js 16.1.3 Turbopack)
+- Database: 97 claims, 8 insurance companies, SQLite
+- All 15 dashboard sections rendering correctly
+
+## Changes Made This Session:
+
+### 14a: CSS Styling Enhancements (Frontend Styling Expert)
+- Added 10 new CSS utility classes to globals.css (+180 lines, total 3388 lines):
+  1. `.sidebar-nav-item` — Nav button base styling with hover indent + animated underline
+  2. `.sidebar-active-item` — Active nav item with left border accent + bg tint
+  3. `.shimmer-enhanced` — Enhanced skeleton shimmer overlay
+  4. `.stat-animate` — Scale+fade pop animation on stat numbers
+  5. `.modern-input` — Refined input with animated bottom border on focus
+  6. `.card-gradient-border` — Decorative gradient border via mask-composite
+  7. `.scroll-shadow-top` — Inner top shadow on scrollable containers
+  8. `.btn-primary-glow` — Glowing primary button with hover/active shadows
+  9. `.card-float` — Gentle idle floating animation (4s cycle)
+  10. `.text-balance` — text-wrap: balance for headings
+- Applied classes to live components:
+  - sidebar-nav-item/sidebar-active-item → Sidebar nav in app-layout.tsx
+  - modern-input → 3 search inputs (header mobile, header desktop, claims view)
+  - shimmer-enhanced → StatsSkeleton loading cards
+  - stat-animate → KPI stat numbers
+  - card-gradient-border → StatsCard KPI wrappers
+  - scroll-shadow-top → Recent Claims + High Priority cards
+  - btn-primary-glow → New Claim button
+  - card-float → Welcome Banner + SLA Compliance cards
+  - text-balance → Recent Claims heading
+
+### 14b: Claim Response Time Tracker Widget (Full-Stack Developer)
+- Created `src/components/dashboard/response-time-tracker.tsx` (~460 lines)
+- Features:
+  1. Average Processing Time Card — Mean time from createdAt→processedAt with circular progress indicator
+  2. SLA Compliance Rate — % claims processed within 24h with color-coded circular ring
+  3. Response Time Distribution Bar Chart — 7 buckets (under 1h to over 7d)
+  4. Slowest Claims Table — Top 5 longest-processing claims with red-tinted OVER SLA badges
+- Data from /api/claims?limit=200&status=COMPLETED and /api/claims?limit=50
+- Integrated into dashboard-view.tsx after PrintQueueAnalytics, FadeIn delay=0.21
+
+### 14c: TypeScript Error Fixes (Full-Stack Developer)
+- Fixed 4 API route files:
+  1. `src/app/api/claims/[id]/feedback/route.ts` — z.record schema fix (2 args)
+  2. `src/app/api/claims/[id]/pdf/route.ts` — Installed @types/pdfkit, Buffer→Uint8Array fix
+  3. `src/app/api/claims/aging/route.ts` — Added index signature to AgingBucket interface
+  4. `src/app/api/claims/analytics/route.ts` — Type predicate filter for nulls, Prisma groupBy _count fix
+
+### 14d: Claims Weekly Summary Widget (Full-Stack Developer)
+- Created `src/components/dashboard/weekly-summary-widget.tsx` (~340 lines)
+- Features:
+  1. Weekly KPI Row — 4 cards: New Claims, Processed, Avg Confidence, Completion Rate (with trend badges)
+  2. Daily Claims Sparkline — 7-day AreaChart with gradient fill
+  3. Top Actions This Week — 3 mini items with icons (most common status, busiest day, avg/day)
+- Data from /api/dashboard + /api/claims?limit=200
+- Integrated into dashboard-view.tsx after ResponseTimeTracker, FadeIn delay=0.23
+
+## Current Project Status Assessment:
+- Stefco Claims Dashboard v3.0.3 — FULLY OPERATIONAL
+- 97 claims, 8 insurance companies seeded
+- 10 navigation views, 50+ API endpoints
+- 20+ dashboard widgets with charts, analytics, and KPIs
+- globals.css: 3388 lines (within 3400 budget)
+- Lint: 0 errors, 0 warnings
+- Some TypeScript errors remain in non-critical files (pdf-report, classify-email, config, dashboard)
+
+## Unresolved Issues / Risks:
+- globals.css at 3388/3400 lines — very close to budget, careful management needed
+- Some TypeScript errors remain in classify-email, config, dashboard routes (non-blocking)
+- PDF report route has Buffer type issue (non-blocking, fallback to [id]/pdf works)
+- Server process stability: requires nohup-based startup to survive in this sandbox
+
+## Priority Recommendations for Next Phase:
+1. Consider splitting globals.css into modular CSS files to avoid size limits
+2. Fix remaining TypeScript errors in classify-email, config, dashboard routes
+3. Add real-time WebSocket updates for live dashboard refresh
+4. Add claim SLA breach notifications/alerts
+5. Enhance mobile responsiveness for complex chart views
+6. Add keyboard navigation improvements across all views

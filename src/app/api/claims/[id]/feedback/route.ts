@@ -21,7 +21,7 @@ const feedbackSchema = z.object({
   fieldName: z.string().optional(),
   originalValue: z.string().optional(),
   correctedValue: z.string().optional(),
-  fieldUpdates: z.record(z.string()).optional(),
+  fieldUpdates: z.record(z.string(), z.string()).optional(),
 })
 
 export async function POST(

@@ -2175,7 +2175,7 @@ export function ClaimsView() {
               <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 size-4 text-muted-foreground" />
               <Input
                 placeholder="Search by claim # or client name..."
-                className="pl-8"
+                className="pl-8 modern-input"
                 value={localSearch}
                 onChange={(e) => handleSearch(e.target.value)}
               />
@@ -2329,7 +2329,7 @@ export function ClaimsView() {
               <Button
                 size="sm"
                 onClick={() => setNewClaimOpen(true)}
-                className="gap-1.5 btn-press hover:bg-primary/90"
+                className="gap-1.5 btn-press hover:bg-primary/90 btn-primary-glow"
               >
                 <Plus className="size-3.5" />
                 New Claim

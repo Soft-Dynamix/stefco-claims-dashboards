@@ -34,6 +34,7 @@ export async function GET() {
       count: number
       avgConfidence: number
       statuses: Record<string, number>
+      [key: string]: unknown
     }
 
     const buckets: AgingBucket[] = AGE_BRACKETS.map((bracket) => ({
@@ -63,7 +64,7 @@ export async function GET() {
         if (ageDays >= bucket.minDays && ageDays <= bucket.maxDays) {
           bucket.count++
           // Track confidence sum (we'll average later)
-          ;(bucket as Record<string, unknown>)._confidenceSum = ((bucket as Record<string, unknown>)._confidenceSum as number || 0) + claim.confidenceScore
+          bucket._confidenceSum = (bucket._confidenceSum as number || 0) + claim.confidenceScore
           // Track status breakdown
           bucket.statuses[claim.status] = (bucket.statuses[claim.status] || 0) + 1
           break
@@ -74,9 +75,9 @@ export async function GET() {
     // Calculate averages
     for (const bucket of buckets) {
       bucket.avgConfidence = bucket.count > 0
-        ? Math.round(((bucket as Record<string, unknown>)._confidenceSum as number || 0) / bucket.count)
+        ? Math.round(((bucket._confidenceSum as number) || 0) / bucket.count)
         : 0
-      delete (bucket as Record<string, unknown>)._confidenceSum
+      delete bucket._confidenceSum
     }
 
     const avgAge = totalAged > 0 ? Math.round(totalAgeDays / totalAged) : 0

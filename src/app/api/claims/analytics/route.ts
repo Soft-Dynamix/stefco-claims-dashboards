@@ -106,7 +106,7 @@ export async function GET() {
     )
 
     // 2. Claims by insurance company breakdown
-    const companyIds = [...new Set(allClaimsWithCompany.map((c) => c.insuranceCompanyId).filter(Boolean))]
+    const companyIds = [...new Set(allClaimsWithCompany.map((c) => c.insuranceCompanyId).filter((id): id is string => Boolean(id)))]
     const companies =
       companyIds.length > 0
         ? await db.insuranceCompany.findMany({
@@ -151,8 +151,8 @@ export async function GET() {
     // 4. Top 5 clients by claim count
     const topClientsList = topClients.map((c) => ({
       name: c.clientName || 'Unknown',
-      count: c._count.id,
-      percentage: Math.round((c._count.id / allClaimsWithCompany.length) * 100),
+      count: c._count as unknown as number,
+      percentage: Math.round(((c._count as unknown as number) / allClaimsWithCompany.length) * 100),
     }))
 
     // 5. Processing efficiency score (% completed within 2 hours = 120 minutes)

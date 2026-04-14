@@ -353,7 +353,7 @@ export async function GET(
 
     const fileName = `STF-${claim.claimNumber}_Claim_Report.pdf`
 
-    return new NextResponse(pdfBuffer, {
+    return new NextResponse(new Uint8Array(pdfBuffer), {
       headers: {
         'Content-Type': 'application/pdf',
         'Content-Disposition': `inline; filename="${fileName}"`,

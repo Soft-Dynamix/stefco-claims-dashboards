@@ -85,6 +85,8 @@ import { ClaimsAnalyticsWidget } from '@/components/dashboard/claims-analytics-w
 import { PerformanceAnalytics } from '@/components/dashboard/performance-analytics'
 import { AIPerformanceWidget } from '@/components/dashboard/ai-performance-widget'
 import { PrintQueueAnalytics } from '@/components/dashboard/print-queue-analytics'
+import { ResponseTimeTracker } from '@/components/dashboard/response-time-tracker'
+import { WeeklySummaryWidget } from '@/components/dashboard/weekly-summary-widget'
 import { ClaimsStatisticsPanel } from '@/components/dashboard/claims-statistics-panel'
 import { QuickActionsPanel } from '@/components/dashboard/quick-actions-panel'
 import { QuickStatsWidget } from '@/components/dashboard/quick-stats-widget'
@@ -198,7 +200,7 @@ function StatsCard({
   borderColor?: string
 }) {
   return (
-    <Card className={`py-6 card-shine card-hover card-lift card-depth-1 hover:shadow-md transition-shadow duration-200 h-full card-enter fade-in-up card-premium hover-lift-sm ${borderColor || ''}`}>
+    <Card className={`py-6 card-shine card-hover card-lift card-depth-1 hover:shadow-md transition-shadow duration-200 h-full card-enter fade-in-up card-premium hover-lift-sm card-gradient-border ${borderColor || ''}`}>
       <CardHeader className="pb-0">
         <div className="flex items-center justify-between">
           <CardTitle className="text-base font-medium text-muted-foreground">
@@ -211,7 +213,7 @@ function StatsCard({
       </CardHeader>
       <CardContent className="pt-2">
         <div className="flex items-end gap-2">
-          <span className="text-3xl font-bold text-foreground tracking-tight stat-glow stat-number-glow count-up">
+          <span className="text-3xl font-bold text-foreground tracking-tight stat-glow stat-number-glow count-up stat-animate">
             {confidenceValue !== undefined ? (
               <span className={getConfidenceColor(confidenceValue)}>
                 {value}%
@@ -318,7 +320,7 @@ function StatsSkeleton() {
   return (
     <div className="grid gap-4 grid-cols-1 sm:grid-cols-2 lg:grid-cols-5">
       {[1, 2, 3, 4, 5].map((i) => (
-        <Card key={i} className="py-5 shimmer-bg">
+        <Card key={i} className="py-5 shimmer-bg shimmer-enhanced">
           <CardHeader className="pb-0">
             <div className="flex items-center justify-between">
               <Skeleton className="h-4 w-24" />
@@ -409,7 +411,7 @@ function RecentClaimsTableWidget() {
   }
 
   return (
-    <Card className="card-shine card-enter hover-scale card-depth-2">
+    <Card className="card-shine card-enter hover-scale card-depth-2 scroll-shadow-top">
       <CardHeader className="pb-3">
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-3">
@@ -417,7 +419,7 @@ function RecentClaimsTableWidget() {
               <FileText className="size-4.5 text-primary" />
             </div>
             <div>
-              <CardTitle className="text-base font-semibold leading-tight gradient-heading">Recent Claims</CardTitle>
+              <CardTitle className="text-base font-semibold leading-tight gradient-heading text-balance">Recent Claims</CardTitle>
               <CardDescription className="text-xs mt-0.5">Latest claims activity</CardDescription>
             </div>
           </div>
@@ -645,7 +647,7 @@ export function DashboardView() {
           {/* Row 1: KPI Cards */}
           {/* Welcome Banner */}
           <FadeIn delay={0}>
-          <Card className="card-shine glass-card glass-card-enhanced banner-gradient-animate bg-gradient-to-r from-primary/8 via-primary/3 to-accent/5 border-l-4 border-l-primary rounded-r-lg overflow-hidden text-shadow-sm">
+          <Card className="card-shine glass-card glass-card-enhanced banner-gradient-animate bg-gradient-to-r from-primary/8 via-primary/3 to-accent/5 border-l-4 border-l-primary rounded-r-lg overflow-hidden text-shadow-sm card-float">
             <CardContent className="p-5 sm:p-7">
               <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
                 <div className="flex items-center gap-4">
@@ -786,7 +788,7 @@ export function DashboardView() {
             </FadeIn>
             {/* SLA Compliance Card */}
             <FadeIn delay={0.13}>
-              <Card className="py-6 card-shine card-hover card-lift hover:shadow-md transition-shadow duration-200 border-l-4 border-l-primary/30 h-full card-enter card-depth-2 hover-lift-sm">
+              <Card className="py-6 card-shine card-hover card-lift hover:shadow-md transition-shadow duration-200 border-l-4 border-l-primary/30 h-full card-enter card-depth-2 hover-lift-sm card-float">
               <CardHeader className="pb-0">
                 <div className="flex items-center justify-between">
                   <CardTitle className="text-base font-medium text-muted-foreground">
@@ -1040,6 +1042,16 @@ export function DashboardView() {
             <PrintQueueAnalytics />
           </FadeIn>
 
+          {/* Claim Response Time Tracker Widget */}
+          <FadeIn delay={0.21}>
+            <ResponseTimeTracker />
+          </FadeIn>
+
+          {/* Weekly Summary Widget */}
+          <FadeIn delay={0.23}>
+            <WeeklySummaryWidget />
+          </FadeIn>
+
           {/* Row 3: Recent Claims + Activity Feed + Insurance Distribution */}
           <FadeIn delay={0.18}>
           <div className="grid gap-5 grid-cols-1 lg:grid-cols-3 scroll-reveal">
@@ -1257,7 +1269,7 @@ export function DashboardView() {
             </Card>
 
             {/* High Priority Claims */}
-            <Card className="py-6 card-shine card-hover card-enter stagger-2">
+            <Card className="py-6 card-shine card-hover card-enter stagger-2 scroll-shadow-top">
               <CardHeader>
                 <div className="flex items-center justify-between">
                   <div className="flex items-center gap-2">
