@@ -384,7 +384,7 @@ export function AgingReportWidget() {
         <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
           {/* Average Age */}
           <TooltipProvider>
-            <Tooltip>
+            <ShadTooltip>
               <TooltipTrigger asChild>
                 <div className="flex items-center gap-3 rounded-lg border p-4 hover:border-primary/30 transition-colors cursor-default">
                   <div className="flex items-center justify-center size-10 rounded-lg bg-sky-100 dark:bg-sky-950/50">
@@ -399,12 +399,12 @@ export function AgingReportWidget() {
               <TooltipContent>
                 <p className="text-xs">Mean age across all {totalBucketed} claims</p>
               </TooltipContent>
-            </Tooltip>
+            </ShadTooltip>
           </TooltipProvider>
 
           {/* Oldest Claim */}
           <TooltipProvider>
-            <Tooltip>
+            <ShadTooltip>
               <TooltipTrigger asChild>
                 <div className="flex items-center gap-3 rounded-lg border p-4 hover:border-primary/30 transition-colors cursor-default">
                   <div className="flex items-center justify-center size-10 rounded-lg bg-orange-100 dark:bg-orange-950/50">
@@ -419,12 +419,12 @@ export function AgingReportWidget() {
               <TooltipContent>
                 <p className="text-xs">Oldest unresolved claim in the system</p>
               </TooltipContent>
-            </Tooltip>
+            </ShadTooltip>
           </TooltipProvider>
 
           {/* Critical Count */}
           <TooltipProvider>
-            <Tooltip>
+            <ShadTooltip>
               <TooltipTrigger asChild>
                 <div className={`flex items-center gap-3 rounded-lg border p-4 transition-colors cursor-default ${analytics.criticalCount > 0 ? 'border-red-200 dark:border-red-800 bg-red-50/50 dark:bg-red-950/20 hover:border-red-400' : 'hover:border-primary/30'}`}>
                   <div className="flex items-center justify-center size-10 rounded-lg bg-red-100 dark:bg-red-950/50">
@@ -439,7 +439,7 @@ export function AgingReportWidget() {
               <TooltipContent>
                 <p className="text-xs">Claims older than 60 days need immediate attention</p>
               </TooltipContent>
-            </Tooltip>
+            </ShadTooltip>
           </TooltipProvider>
         </div>
 

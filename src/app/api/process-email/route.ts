@@ -526,7 +526,7 @@ export async function POST(request: NextRequest) {
     }
 
     // Create Print Queue Items
-    const printQueueItems = []
+    const printQueueItems: Array<{ id: string; fileName: string; filePath: string | null; printStatus: string }> = []
     let printQueued = false
     for (const attachment of attachments) {
       const printItem = await db.printQueueItem.create({
@@ -618,20 +618,24 @@ export async function POST(request: NextRequest) {
           currentStage = 'RESPONDED'
           stageLog.push('RESPONDED')
           await db.auditLog.create({
-            claimId: claim.id,
-            action: 'auto_reply_sent',
-            details: `Auto-reply sent to ${replyTo} for claim ${claimNumber}.`,
-            status: 'SUCCESS',
-            processedBy: 'AUTO',
+            data: {
+              claimId: claim.id,
+              action: 'auto_reply_sent',
+              details: `Auto-reply sent to ${replyTo} for claim ${claimNumber}.`,
+              status: 'SUCCESS',
+              processedBy: 'AUTO',
+            },
           })
         } else {
           autoReplyError = replyResult.error || 'Unknown SMTP error'
           await db.auditLog.create({
-            claimId: claim.id,
-            action: 'auto_reply_failed',
-            details: `Failed to send auto-reply to ${replyTo}: ${autoReplyError}`,
-            status: 'WARNING',
-            processedBy: 'AUTO',
+            data: {
+              claimId: claim.id,
+              action: 'auto_reply_failed',
+              details: `Failed to send auto-reply to ${replyTo}: ${autoReplyError}`,
+              status: 'WARNING',
+              processedBy: 'AUTO',
+            },
           })
         }
       }

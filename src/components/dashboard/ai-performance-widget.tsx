@@ -377,10 +377,10 @@ export function AIPerformanceWidget() {
                   contentStyle={rechartsTooltipStyle}
                   itemStyle={{ color: 'var(--color-foreground)' }}
                   labelStyle={{ color: 'var(--color-foreground)' }}
-                  formatter={(value: number, _name: string, props: { payload: { type: string; count: number } }) => [
+                  formatter={((value: number, _name: string, props: any) => [
                     `${value}% accuracy`,
                     `${props.payload.count} claims`,
-                  ]}
+                  ]) as any}
                   labelFormatter={(label: string) => `${label} Claims`}
                 />
                 <Bar

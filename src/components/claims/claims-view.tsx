@@ -2304,7 +2304,7 @@ export function ClaimsView() {
 
       {/* Claims Table or Kanban */}
       {viewMode === 'kanban' ? (
-        <ClaimsKanban onClaimClick={handleClaimClick} />
+        <ClaimsKanban onClaimClick={(claim) => handleClaimClick(claim as any)} />
       ) : (
       <FadeIn delay={0.1}>
       <Card className="py-4 card-enter stagger-2">

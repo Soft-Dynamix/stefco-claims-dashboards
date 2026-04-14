@@ -1,0 +1,22 @@
+# ─────────────────────────────────────────────────────────────────────────────
+# Stefco Claims Dashboard — Docker Caddy Configuration
+#
+# Listens on port 80 inside the container.
+# Docker maps external port (APP_PORT, default 3000) to container port 80.
+# Proxies all traffic to the Next.js server running on port 3000.
+# ─────────────────────────────────────────────────────────────────────────────
+
+:80 {
+	# XTransformPort routing — for microservice proxies
+	@transform_port_query {
+		query XTransformPort=*
+	}
+
+	handle @transform_port_query {
+		reverse_proxy localhost:{query.XTransformPort}
+	}
+
+	handle {
+		reverse_proxy localhost:3000
+	}
+}

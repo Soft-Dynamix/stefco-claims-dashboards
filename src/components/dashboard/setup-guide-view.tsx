@@ -1065,7 +1065,7 @@ docker compose ps`}
                         <div className="text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-2">
                           API Response
                         </div>
-                        <CodeBlock language="json" code={testResults[email.id]} />
+                        <CodeBlock language="json" code={testResults[email.id] ?? ''} />
                       </div>
                     )}
                   </div>

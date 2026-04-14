@@ -516,11 +516,11 @@ export function ClaimsStatisticsPanel() {
                           contentStyle={TOOLTIP_STYLE}
                           itemStyle={{ color: 'var(--color-foreground)' }}
                           labelStyle={{ color: 'var(--color-foreground)' }}
-                          formatter={(value: number, _name: string, props: { payload: { type: string; count: number; _payload?: { total?: number } } }) => {
+                          formatter={((value: number, _name: string, props: any) => {
                             const total = claimTypeBreakdown.reduce((s, c) => s + c.count, 0)
                             const pct = total > 0 ? Math.round((value / total) * 100) : 0
                             return [`${value} (${pct}%)`, props.payload.type]
-                          }}
+                          }) as any}
                         />
                       </PieChart>
                     </ResponsiveContainer>

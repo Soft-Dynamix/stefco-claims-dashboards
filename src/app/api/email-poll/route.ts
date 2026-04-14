@@ -334,7 +334,6 @@ export async function POST() {
         tls: { rejectUnauthorized: false },
         auth: { user: config.user, pass: config.password },
         logger: false,
-        authTimeout: 15000,
         connectionTimeout: 15000,
       })
 
@@ -366,7 +365,8 @@ export async function POST() {
         return NextResponse.json({ error: 'INBOX not found', processed: 0, configured: true }, { status: 503 })
       }
 
-      const messages = await client.search({ seen: false })
+      const searchResult = await client.search({ seen: false })
+      const messages = Array.isArray(searchResult) ? searchResult : []
       console.error(`[email-poll] Found ${messages.length} unread messages`)
 
       if (messages.length === 0) {
@@ -387,8 +387,15 @@ export async function POST() {
             envelope: true,
           })
 
-          const from = message.envelope?.from?.[0]?.address || 'unknown@unknown.com'
-          const subject = message.envelope?.subject || '(no subject)'
+          if (!message || !message.envelope || !message.source) {
+            console.error(`[email-poll] Skipping UID ${uid}: missing envelope or source`)
+            failedCount++
+            results.push({ subject: `UID ${uid}`, from: 'unknown', success: false, error: 'Missing envelope or source data' })
+            continue
+          }
+
+          const from = message.envelope.from?.[0]?.address || 'unknown@unknown.com'
+          const subject = message.envelope.subject || '(no subject)'
 
           // Parse email body
           const sourceStr = typeof message.source === 'string'

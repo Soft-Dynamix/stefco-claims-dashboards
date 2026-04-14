@@ -50,7 +50,7 @@ export async function POST(request: NextRequest) {
 
     let auditAction: string
     let auditDetails: string
-    let auditStatus = 'SUCCESS' as const
+    let auditStatus: 'SUCCESS' | 'WARNING' | 'ERROR' = 'SUCCESS'
     let learningPatternsCreated = 0
 
     const updateData: Record<string, unknown> = {

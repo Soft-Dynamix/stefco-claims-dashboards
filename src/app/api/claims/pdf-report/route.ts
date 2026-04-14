@@ -389,7 +389,7 @@ export async function GET(request: NextRequest) {
 
     const timestamp = new Date().toISOString().split('T')[0]
 
-    return new NextResponse(pdfBuffer, {
+    return new NextResponse(new Uint8Array(pdfBuffer), {
       headers: {
         'Content-Type': 'application/pdf',
         'Content-Disposition': `inline; filename="STF-Claims_Summary_${timestamp}.pdf"`,

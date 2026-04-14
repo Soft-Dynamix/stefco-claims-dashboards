@@ -24,8 +24,8 @@ export async function POST(request: NextRequest) {
     const classificationResult = await classifyEmail(subject, emailBody, from)
 
     // Step 2: If classified as NEW_CLAIM, extract structured claim data using AI
-    let extractedData = null
-    let suggestedPath = null
+    let extractedData: Record<string, string | null> | null = null
+    let suggestedPath: string | null = null
 
     if (classificationResult.classification === 'NEW_CLAIM') {
       const extractionResult = await extractClaimData(subject, emailBody, from)

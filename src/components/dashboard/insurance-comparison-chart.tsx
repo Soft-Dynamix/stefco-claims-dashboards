@@ -28,7 +28,9 @@ interface InsuranceComparisonData {
   avgConfidence: number
 }
 
-interface ChartRow extends InsuranceComparisonData {
+interface ChartRow {
+  company: string
+  totalClaims: number
   NEW: number
   PROCESSING: number
   MANUAL_REVIEW: number

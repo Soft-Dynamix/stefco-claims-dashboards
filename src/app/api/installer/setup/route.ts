@@ -193,7 +193,7 @@ export async function PUT(request: NextRequest) {
     }
 
     const validKeys = new Set(configGroup.fields.map((f) => f.key))
-    const updatedConfigs = []
+    const updatedConfigs: Array<{ id: string; key: string; value: string; updatedAt: Date }> = []
 
     for (const [key, value] of Object.entries(values)) {
       if (!validKeys.has(key)) {
@@ -204,7 +204,7 @@ export async function PUT(request: NextRequest) {
       // Retry up to 3 times for database locked errors (SQLite BUSY)
       let retries = 0
       const maxRetries = 3
-      let config = null
+      let config: { id: string; updatedAt: Date; key: string; value: string } | null = null
       while (retries < maxRetries) {
         try {
           config = await db.systemConfig.upsert({
@@ -620,7 +620,7 @@ async function validateAiKey(): Promise<{ success: boolean; message: string; det
           // No fallback providers worked — try z-ai-web-dev-sdk as last resort
           try {
             const fallbackStart = Date.now()
-            const ZAI = await import('z-ai-web-dev-sdk').then((m) => m.default || m.ZAI || m)
+            const ZAI = await import('z-ai-web-dev-sdk').then((m) => m.default || (m as Record<string, unknown>).ZAI || m)
             const zai = await ZAI.create()
             const completion = await zai.chat.completions.create({
               messages: [
@@ -733,7 +733,7 @@ async function validateAiKey(): Promise<{ success: boolean; message: string; det
       // No fallback providers — try z-ai-web-dev-sdk as last resort
       try {
         const fallbackStart = Date.now()
-        const ZAI = await import('z-ai-web-dev-sdk').then((m) => m.default || m.ZAI || m)
+        const ZAI = await import('z-ai-web-dev-sdk').then((m) => m.default || (m as Record<string, unknown>).ZAI || m)
         const zai = await ZAI.create()
         const completion = await zai.chat.completions.create({
           messages: [
@@ -791,7 +791,7 @@ async function validateAiKey(): Promise<{ success: boolean; message: string; det
     // No fallback providers — try z-ai-web-dev-sdk as last resort
     try {
       const fallbackStart = Date.now()
-      const ZAI = await import('z-ai-web-dev-sdk').then((m) => m.default || m.ZAI || m)
+      const ZAI = await import('z-ai-web-dev-sdk').then((m) => m.default || (m as Record<string, unknown>).ZAI || m)
       const zai = await ZAI.create()
       const completion = await zai.chat.completions.create({
         messages: [

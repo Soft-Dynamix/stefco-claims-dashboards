@@ -16,6 +16,8 @@ interface ClaimsState {
   }
   refreshKey: number
   sidebarOpen: boolean
+  compactMode: boolean
+  reducedAnimations: boolean
 
   setActiveTab: (tab: TabType) => void
   setSelectedClaimId: (id: string | null) => void
@@ -27,6 +29,8 @@ interface ClaimsState {
   triggerRefresh: () => void
   setSidebarOpen: (open: boolean) => void
   toggleSidebar: () => void
+  setCompactMode: (v: boolean) => void
+  setReducedAnimations: (v: boolean) => void
 }
 
 const defaultFilters = {
@@ -45,6 +49,8 @@ export const useClaimsStore = create<ClaimsState>((set) => ({
   filters: { ...defaultFilters },
   refreshKey: 0,
   sidebarOpen: false,
+  compactMode: false,
+  reducedAnimations: false,
 
   setActiveTab: (tab) => set({ activeTab: tab }),
   setSelectedClaimId: (id) => set({ selectedClaimId: id }),
@@ -57,4 +63,6 @@ export const useClaimsStore = create<ClaimsState>((set) => ({
   triggerRefresh: () => set((state) => ({ refreshKey: state.refreshKey + 1 })),
   setSidebarOpen: (open) => set({ sidebarOpen: open }),
   toggleSidebar: () => set((state) => ({ sidebarOpen: !state.sidebarOpen })),
+  setCompactMode: (v) => set({ compactMode: v }),
+  setReducedAnimations: (v) => set({ reducedAnimations: v }),
 }))

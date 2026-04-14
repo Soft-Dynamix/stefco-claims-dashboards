@@ -58,6 +58,8 @@ import { Skeleton } from '@/components/ui/skeleton'
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip'
 import { ScrollArea } from '@/components/ui/scroll-area'
 import { toast } from 'sonner'
+import { FadeIn } from '@/components/ui/motion'
+import { ThemeSettingsPanel } from '@/components/dashboard/theme-settings-panel'
 
 // ─── Scheduler & IMAP Status Types ──────────────────────────────────────────────
 
@@ -202,6 +204,7 @@ interface LearningAnalysisData {
   totalCorrections: number
   totalConfirmations: number
   analysisPeriod: string
+  generatedAt?: string
 }
 
 // ─── Self-Learning System Panel ──────────────────────────────────────────────
@@ -493,7 +496,7 @@ function SelfLearningSystemPanel() {
               <span className="text-xs font-medium text-muted-foreground uppercase tracking-wider group-hover:text-foreground transition-colors">
                 Analysis Results
               </span>
-              {analysis.generatedAt && (
+              {('generatedAt' in analysis && analysis.generatedAt) && (
                 <span className="text-[10px] text-muted-foreground ml-auto">
                   {formatRelativeTime(analysis.generatedAt)}
                 </span>
@@ -739,6 +742,7 @@ function EmailSchedulerStatusBadge() {
 
   const isRunning = status?.running ?? false
 
+
   return (
     <Tooltip>
       <TooltipTrigger asChild>
@@ -760,16 +764,16 @@ function EmailSchedulerStatusBadge() {
           <span className="text-xs font-medium">
             {isRunning ? 'Running' : 'Stopped'}
           </span>
-          {isRunning && status.uptime !== null && (
+          {isRunning && status?.uptime !== null && (
             <span className="text-[10px] opacity-70">
-              {formatUptime(status.uptime)}
+              {formatUptime(status?.uptime ?? 0)}
             </span>
           )}
         </div>
       </TooltipTrigger>
       <TooltipContent side="bottom">
         {isRunning
-          ? `Scheduler active — ${status.pollCount} polls completed`
+          ? `Scheduler active — ${status?.pollCount ?? 0} polls completed`
           : 'Scheduler is not running — click Start to begin'}
       </TooltipContent>
     </Tooltip>
@@ -925,7 +929,7 @@ function EmailSchedulerPanel({
     },
     {
       label: 'Poll Interval',
-      value: formatInterval(schedulerStatus?.interval),
+      value: formatInterval(schedulerStatus?.interval ?? null),
       icon: RefreshCw,
       format: 'text' as const,
     },
@@ -959,7 +963,7 @@ function EmailSchedulerPanel({
           </p>
           {isRunning && schedulerStatus?.uptime !== null && (
             <p className="text-[11px] text-muted-foreground mt-0.5">
-              Running for {formatUptime(schedulerStatus.uptime)} · {schedulerStatus.pollCount} polls completed
+              Running for {formatUptime(schedulerStatus?.uptime ?? 0)} · {schedulerStatus?.pollCount ?? 0} polls completed
             </p>
           )}
         </div>
@@ -1266,6 +1270,11 @@ export function ConfigView() {
 
   return (
     <div className="space-y-6 max-w-2xl">
+      {/* Theme & Appearance */}
+      <FadeIn delay={0.05}>
+        <ThemeSettingsPanel />
+      </FadeIn>
+
       {/* AI Provider */}
       <Card className="py-5 card-enter stagger-1 hover-scale">
         <CardHeader>

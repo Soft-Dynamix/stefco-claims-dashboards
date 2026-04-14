@@ -410,7 +410,7 @@ export async function getLearningStats(): Promise<LearningStats> {
     const topCorrectedFields = fieldAgg
       .filter((f) => f.fieldName)
       .map((f) => ({
-        field: f.fieldName.replace(/_/g, ' ').replace(/\b\w/g, (c) => c.toUpperCase()),
+        field: (f.fieldName ?? '').replace(/_/g, ' ').replace(/\b\w/g, (c) => c.toUpperCase()),
         count: f._count.id,
       }))
 

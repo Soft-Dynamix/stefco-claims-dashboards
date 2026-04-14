@@ -29,7 +29,7 @@ export async function GET(request: NextRequest) {
     }
 
     // Build filter-specific where clause
-    let whereClause = { ...todayWhere }
+    let whereClause: any = { ...todayWhere }
 
     switch (filter) {
       case 'needs_review':

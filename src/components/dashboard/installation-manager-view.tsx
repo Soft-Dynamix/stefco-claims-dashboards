@@ -145,7 +145,7 @@ interface HealthData {
 
 interface DiagnosticResult {
   test: string
-  status: 'pass' | 'fail' | 'warn'
+  status: 'pass' | 'fail' | 'warning'
   message: string
   details?: Record<string, unknown>
 }
@@ -1161,7 +1161,7 @@ function DiagnosticsTab() {
             {results.filter(r => r.status === 'fail').length} Failed
           </Badge>
           <Badge variant="outline" className="bg-amber-50 text-amber-700 dark:bg-amber-950/30 dark:text-amber-400 border-amber-200 dark:border-amber-800">
-            {results.filter(r => r.status === 'warn').length} Warnings
+            {results.filter(r => r.status === 'warning').length} Warnings
           </Badge>
         </div>
       )}

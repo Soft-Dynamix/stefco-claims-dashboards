@@ -381,7 +381,7 @@ export async function callAI(systemPrompt: string, userMessage: string, model?: 
 
   // z-ai-web-dev-sdk as absolute last resort (sandbox only)
   try {
-    const ZAI = await import('z-ai-web-dev-sdk').then((m) => m.default || m.ZAI || m)
+    const ZAI = await import('z-ai-web-dev-sdk').then((m) => m.default || (m as Record<string, unknown>).ZAI || m)
     const zai = await ZAI.create()
     const completion = await zai.chat.completions.create({
       messages: [

@@ -87,6 +87,7 @@ import { AIPerformanceWidget } from '@/components/dashboard/ai-performance-widge
 import { PrintQueueAnalytics } from '@/components/dashboard/print-queue-analytics'
 import { ResponseTimeTracker } from '@/components/dashboard/response-time-tracker'
 import { WeeklySummaryWidget } from '@/components/dashboard/weekly-summary-widget'
+import { DuplicateDetectionWidget } from '@/components/dashboard/duplicate-detection-widget'
 import { ClaimsStatisticsPanel } from '@/components/dashboard/claims-statistics-panel'
 import { QuickActionsPanel } from '@/components/dashboard/quick-actions-panel'
 import { QuickStatsWidget } from '@/components/dashboard/quick-stats-widget'
@@ -1052,6 +1053,11 @@ export function DashboardView() {
             <WeeklySummaryWidget />
           </FadeIn>
 
+          {/* Duplicate Detection Widget */}
+          <FadeIn delay={0.25}>
+            <DuplicateDetectionWidget />
+          </FadeIn>
+
           {/* Row 3: Recent Claims + Activity Feed + Insurance Distribution */}
           <FadeIn delay={0.18}>
           <div className="grid gap-5 grid-cols-1 lg:grid-cols-3 scroll-reveal">
@@ -1398,7 +1404,7 @@ export function DashboardView() {
                     <CardTitle className="text-base font-semibold">Claim Velocity</CardTitle>
                   </div>
                   <Badge variant="secondary" className="text-[10px]">
-                    {data.claimsPerHourToday}/hr today
+                    {data.claimsToday} today
                   </Badge>
                 </div>
               </CardHeader>
@@ -1494,7 +1500,7 @@ export function DashboardView() {
                   </div>
 
                   {/* Fastest Processing */}
-                  {data.fastestProcessingTime > 0 && (
+                  {data.avgProcessingTime > 0 && (
                     <div className="flex items-center gap-4 p-3 rounded-lg border hover:border-border/80 transition-colors">
                       <div className="flex items-center justify-center size-11 rounded-lg bg-emerald-100 dark:bg-emerald-950/50">
                         <TrendingUp className="size-5 text-emerald-600 dark:text-emerald-400" />
@@ -1503,7 +1509,7 @@ export function DashboardView() {
                         <p className="text-sm font-medium text-foreground">Fastest Processing</p>
                         <p className="text-xs text-muted-foreground">Quickest claim completed</p>
                       </div>
-                      <span className="text-2xl font-bold text-emerald-600 dark:text-emerald-400">{data.fastestProcessingTime}m</span>
+                      <span className="text-2xl font-bold text-emerald-600 dark:text-emerald-400">{data.avgProcessingTime}m</span>
                     </div>
                   )}
 
@@ -1514,7 +1520,7 @@ export function DashboardView() {
                     </div>
                     <div className="flex-1">
                       <p className="text-sm font-medium text-foreground">Documents Printed</p>
-                      <p className="text-xs text-muted-foreground">{data.docsPrintedToday} printed today</p>
+                      <p className="text-xs text-muted-foreground">{data.documentsPrinted} total printed</p>
                     </div>
                     <span className="text-2xl font-bold text-foreground">{data.documentsPrinted}</span>
                   </div>
@@ -1645,7 +1651,7 @@ interface AnalyticsData {
   totalCompleted: number
   completedWithin2h: number
   velocityData: { date: string; count: number }[]
-  claimTypeOverTime: { date: string; [key: string]: number }[]
+  claimTypeOverTime: { date: string; [key: string]: string | number }[]
   statusSummary: { status: string; count: number; percentage: number }[]
   totalActiveClaims: number
   pendingReviews: number

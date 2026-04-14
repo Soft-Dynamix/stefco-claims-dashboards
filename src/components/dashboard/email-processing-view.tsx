@@ -964,7 +964,7 @@ function SchedulerControlPanel() {
                     <p className="text-[11px] text-muted-foreground uppercase tracking-wider">Last Poll</p>
                     <p className="text-sm font-medium text-foreground mt-0.5 truncate">
                       {schedulerData?.lastPollAt
-                        ? formatRelativeTime(new Date(schedulerData.lastPollAt))
+                        ? formatRelativeTime(new Date(schedulerData.lastPollAt).toISOString())
                         : 'Never'}
                     </p>
                   </div>
@@ -972,7 +972,7 @@ function SchedulerControlPanel() {
                     <p className="text-[11px] text-muted-foreground uppercase tracking-wider">Next Poll</p>
                     <p className="text-sm font-medium text-foreground mt-0.5 truncate">
                       {schedulerData?.nextPollAt
-                        ? formatRelativeTime(new Date(schedulerData.nextPollAt))
+                        ? formatRelativeTime(new Date(schedulerData.nextPollAt).toISOString())
                         : '—'}
                     </p>
                   </div>

@@ -42,7 +42,7 @@ export async function PUT(request: NextRequest) {
       )
     }
 
-    const updatedConfigs = []
+    const updatedConfigs: Array<{ id: string; key: string; value: string; updatedAt: Date }> = []
 
     for (const [key, value] of entries) {
       if (typeof key !== 'string' || key.trim().length === 0) {

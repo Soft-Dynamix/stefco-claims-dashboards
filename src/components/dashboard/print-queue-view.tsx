@@ -141,7 +141,7 @@ export function PrintQueueView() {
         body: JSON.stringify({ action: 'retry', id }),
       }).then((r) => { if (!r.ok) throw new Error('Request failed'); return r.json() }),
     onSuccess: () => {
-      invalidateClaimData(queryClient)
+      queryClient.invalidateQueries({ queryKey: ['claims'] })
     },
   })
 
@@ -153,7 +153,7 @@ export function PrintQueueView() {
         body: JSON.stringify({ action: 'complete', id }),
       }).then((r) => { if (!r.ok) throw new Error('Request failed'); return r.json() }),
     onSuccess: () => {
-      invalidateClaimData(queryClient)
+      queryClient.invalidateQueries({ queryKey: ['claims'] })
     },
   })
 
@@ -190,7 +190,7 @@ export function PrintQueueView() {
         body: JSON.stringify({ action: 'mark_all_printed' }),
       }).then((r) => { if (!r.ok) throw new Error('Request failed'); return r.json() }),
     onSuccess: (data) => {
-      invalidateClaimData(queryClient)
+      queryClient.invalidateQueries({ queryKey: ['claims'] })
       toast.success(data.message || 'All pending items marked as printed')
     },
     onError: () => {
@@ -206,7 +206,7 @@ export function PrintQueueView() {
         body: JSON.stringify({ action: 'clear_completed' }),
       }).then((r) => { if (!r.ok) throw new Error('Request failed'); return r.json() }),
     onSuccess: (data) => {
-      invalidateClaimData(queryClient)
+      queryClient.invalidateQueries({ queryKey: ['claims'] })
       toast.success(data.message || 'Completed items cleared')
     },
     onError: () => {

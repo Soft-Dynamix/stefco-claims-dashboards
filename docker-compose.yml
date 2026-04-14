@@ -1,0 +1,74 @@
+# ─────────────────────────────────────────────────────────────────────────────
+# Stefco Claims Dashboard — Docker Compose
+#
+# Usage:
+#   docker compose up -d              # Start in background
+#   docker compose logs -f             # Follow logs
+#   docker compose down                # Stop containers
+#   docker compose down -v             # Stop + remove volumes (wipes DB!)
+#   docker compose restart             # Restart
+# ─────────────────────────────────────────────────────────────────────────────
+
+services:
+  app:
+    image: stefco-claims-dashboards-app
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: stefco-claims-dashboard
+    restart: unless-stopped
+    ports:
+      - "${APP_PORT:-3000}:3000"
+    environment:
+      # ── Core ──
+      - NODE_ENV=production
+      - PORT=3000
+      - DATABASE_URL=file:/app/db/custom.db
+
+      # ── AI Provider (set one or more) ──
+      - AI_PROVIDER=${AI_PROVIDER:-gemini}
+      - GEMINI_API_KEY=${GEMINI_API_KEY:-}
+      - GROQ_API_KEY=${GROQ_API_KEY:-}
+      - OPENROUTER_API_KEY=${OPENROUTER_API_KEY:-}
+
+      # ── IMAP (Incoming Email) ──
+      - IMAP_HOST=${IMAP_HOST:-}
+      - IMAP_PORT=${IMAP_PORT:-993}
+      - IMAP_USER=${IMAP_USER:-}
+      - IMAP_PASSWORD=${IMAP_PASSWORD:-}
+      - IMAP_SSL=${IMAP_SSL:-true}
+      - IMAP_TLS=${IMAP_TLS:-true}
+
+      # ── SMTP (Outgoing Email / Auto-Reply) ──
+      - SMTP_HOST=${SMTP_HOST:-}
+      - SMTP_PORT=${SMTP_PORT:-587}
+      - SMTP_USER=${SMTP_USER:-}
+      - SMTP_PASSWORD=${SMTP_PASSWORD:-}
+      - SMTP_SSL=${SMTP_SSL:-false}
+      - SMTP_TLS=${SMTP_TLS:-true}
+
+      # ── URLs ──
+      - NEXT_PUBLIC_APP_URL=${NEXT_PUBLIC_APP_URL:-http://localhost:3000}
+      - DASHBOARD_BASE_URL=${DASHBOARD_BASE_URL:-}
+    volumes:
+      # Persist the SQLite database across container restarts
+      - stefco-db-data:/app/db
+      # Persist uploaded files / documents
+      - stefco-data:/app/data
+      # Persist logs
+      - stefco-logs:/app/logs
+    healthcheck:
+      # Uses healthcheck.js created in Dockerfile (avoids YAML escaping issues)
+      test: ["CMD", "node", "/app/healthcheck.js"]
+      interval: 10s
+      timeout: 5s
+      start_period: 10s
+      retries: 3
+
+volumes:
+  stefco-db-data:
+    driver: local
+  stefco-data:
+    driver: local
+  stefco-logs:
+    driver: local

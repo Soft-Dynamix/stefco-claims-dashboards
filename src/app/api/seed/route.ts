@@ -165,7 +165,7 @@ export async function POST() {
     await db.systemConfig.deleteMany()
 
     // Create insurance companies matching spec Table 3
-    const companies = []
+    const companies: Array<{ id: string; name: string; folderName: string; senderDomains: string; isActive: boolean; createdAt: Date; updatedAt: Date }> = []
     for (const company of insuranceCompanies) {
       const c = await db.insuranceCompany.create({
         data: {

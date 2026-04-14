@@ -175,7 +175,7 @@ function StageRow({
             {/* Color indicator dot */}
             <div
               className="size-2.5 rounded-full shrink-0 ring-2 ring-offset-1 ring-offset-background transition-transform group-hover:scale-125"
-              style={{ backgroundColor: stage.color, ringColor: stage.color }}
+              style={{ backgroundColor: stage.color, '--tw-ring-color': stage.color } as React.CSSProperties}
             />
 
             {/* Stage label */}

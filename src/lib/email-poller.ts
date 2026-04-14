@@ -193,7 +193,8 @@ export async function restartScheduler(newInterval: number): Promise<{
   // Small delay to ensure clean state
   await new Promise(resolve => setTimeout(resolve, 500))
 
-  return startScheduler(newInterval)
+  const result = await startScheduler(newInterval)
+  return { restarted: result.started, interval: result.interval, message: result.message }
 }
 
 /**

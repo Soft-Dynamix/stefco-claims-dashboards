@@ -33,6 +33,7 @@ interface ClaimSummary {
     confidenceScore: number
     createdAt: string
     processedAt: string | null
+    updatedAt: string
     insuranceCompanyId: string | null
   }[]
   total: number

@@ -55,9 +55,9 @@ export async function GET(request: NextRequest) {
       docsPrintedToday,
     ] = await Promise.all([
       db.claim.count({ where: baseWhere }),
-      db.claim.count({ where: { ...baseWhere, createdAt: { gte: todayStart, ...(dateFilter?.gte ? { gte: dateFilter.gte > todayStart ? dateFilter.gte : todayStart } : { gte: todayStart }), ...(dateFilter?.lte ? { lte: dateFilter.lte } : {}) } } }),
-      db.claim.count({ where: { ...baseWhere, createdAt: { gte: weekStart, ...(dateFilter?.gte ? { gte: dateFilter.gte > weekStart ? dateFilter.gte : weekStart } : { gte: weekStart }), ...(dateFilter?.lte ? { lte: dateFilter.lte } : {}) } } }),
-      db.claim.count({ where: { ...baseWhere, createdAt: { gte: monthStart, ...(dateFilter?.gte ? { gte: dateFilter.gte > monthStart ? dateFilter.gte : monthStart } : { gte: monthStart }), ...(dateFilter?.lte ? { lte: dateFilter.lte } : {}) } } }),
+      db.claim.count({ where: { ...baseWhere, createdAt: { gte: dateFilter?.gte ? (dateFilter.gte > todayStart ? dateFilter.gte : todayStart) : todayStart, ...(dateFilter?.lte ? { lte: dateFilter.lte } : {}) } } }),
+      db.claim.count({ where: { ...baseWhere, createdAt: { gte: dateFilter?.gte ? (dateFilter.gte > weekStart ? dateFilter.gte : weekStart) : weekStart, ...(dateFilter?.lte ? { lte: dateFilter.lte } : {}) } } }),
+      db.claim.count({ where: { ...baseWhere, createdAt: { gte: dateFilter?.gte ? (dateFilter.gte > monthStart ? dateFilter.gte : monthStart) : monthStart, ...(dateFilter?.lte ? { lte: dateFilter.lte } : {}) } } }),
       db.claim.findMany({
         where: baseWhere,
         select: { status: true, claimType: true, insuranceCompanyId: true, confidenceScore: true },
@@ -73,7 +73,7 @@ export async function GET(request: NextRequest) {
         },
       }),
       db.claim.findMany({
-        where: { ...baseWhere, createdAt: { gte: thirtyDaysAgo, ...(dateFilter?.gte ? { gte: dateFilter.gte > thirtyDaysAgo ? dateFilter.gte : thirtyDaysAgo } : { gte: thirtyDaysAgo }), ...(dateFilter?.lte ? { lte: dateFilter.lte } : {}) } },
+        where: { ...baseWhere, createdAt: { gte: dateFilter?.gte ? (dateFilter.gte > thirtyDaysAgo ? dateFilter.gte : thirtyDaysAgo) : thirtyDaysAgo, ...(dateFilter?.lte ? { lte: dateFilter.lte } : {}) } },
         select: { createdAt: true },
       }),
       // Claims processed within 2 hours (completed or reviewed)
@@ -101,7 +101,7 @@ export async function GET(request: NextRequest) {
       }),
       // Documents printed today
       db.claim.count({
-        where: { ...baseWhere, documentsPrinted: true, createdAt: { gte: todayStart, ...(dateFilter?.gte ? { gte: dateFilter.gte > todayStart ? dateFilter.gte : todayStart } : { gte: todayStart }), ...(dateFilter?.lte ? { lte: dateFilter.lte } : {}) } },
+        where: { ...baseWhere, documentsPrinted: true, createdAt: { gte: dateFilter?.gte ? (dateFilter.gte > todayStart ? dateFilter.gte : todayStart) : todayStart, ...(dateFilter?.lte ? { lte: dateFilter.lte } : {}) } },
       }),
     ])
 
@@ -208,7 +208,7 @@ export async function GET(request: NextRequest) {
     const lastWeekStart = new Date(weekStart.getTime() - 7 * 24 * 60 * 60 * 1000)
     const lastWeekEnd = new Date(weekStart.getTime() - 1)
     const claimsLastWeek = await db.claim.count({
-      where: { ...baseWhere, createdAt: { gte: lastWeekStart, lte: lastWeekEnd, ...(dateFilter?.gte ? { gte: dateFilter.gte > lastWeekStart ? dateFilter.gte : lastWeekStart } : { gte: lastWeekStart }), ...(dateFilter?.lte ? { lte: dateFilter.lte } : { lte: lastWeekEnd }) } },
+      where: { ...baseWhere, createdAt: { gte: dateFilter?.gte ? (dateFilter.gte > lastWeekStart ? dateFilter.gte : lastWeekStart) : lastWeekStart, lte: dateFilter?.lte ? (dateFilter.lte < lastWeekEnd ? dateFilter.lte : lastWeekEnd) : lastWeekEnd } },
     })
     const weeklyChange = claimsLastWeek > 0
       ? Math.round(((claimsThisWeek - claimsLastWeek) / claimsLastWeek) * 100)

@@ -66,7 +66,6 @@ export async function GET() {
             pass: password,
           },
           logger: false,
-          authTimeout: 5000,
           connectionTimeout: 5000,
         })
 
