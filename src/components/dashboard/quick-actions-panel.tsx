@@ -38,7 +38,7 @@ function QuickActionCard({ action, staggerClass }: { action: QuickAction; stagge
   return (
     <button
       onClick={action.action}
-      className={`group text-left w-full rounded-xl border border-border/50 bg-background p-4 btn-soft btn-shine btn-press btn-glow hover:bg-muted/50 hover:border-border hover:shadow-md hover:-translate-y-0.5 transition-all duration-200 cursor-pointer focus:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 card-enter ${staggerClass} hover-glow-sm`}
+      className={`group text-left w-full rounded-xl border border-border/50 bg-background p-4 btn-soft btn-shine btn-press btn-glow hover:bg-muted/50 hover:border-border hover:shadow-md hover:-translate-y-0.5 transition-all duration-200 cursor-pointer focus:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 card-enter ${staggerClass} hover-glow-sm action-btn-modern`}
     >
       <div className="flex items-start gap-3">
         <div

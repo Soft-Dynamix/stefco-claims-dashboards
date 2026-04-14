@@ -211,7 +211,7 @@ function StatsCard({
       </CardHeader>
       <CardContent className="pt-2">
         <div className="flex items-end gap-2">
-          <span className="text-3xl font-bold text-foreground tracking-tight stat-glow count-up">
+          <span className="text-3xl font-bold text-foreground tracking-tight stat-glow stat-number-glow count-up">
             {confidenceValue !== undefined ? (
               <span className={getConfidenceColor(confidenceValue)}>
                 {value}%
@@ -445,7 +445,7 @@ function RecentClaimsTableWidget() {
                 <TableHead className="text-xs font-semibold h-9 text-right">Date</TableHead>
               </TableRow>
             </TableHeader>
-            <TableBody>
+            <TableBody className="table-stripe">
               {recentLoading ? (
                 Array.from({ length: 5 }).map((_, i) => (
                   <TableRow key={`skel-${i}`} className="hover:bg-transparent">
@@ -1065,7 +1065,7 @@ export function DashboardView() {
                         <TableHead className="hidden xl:table-cell">Date</TableHead>
                       </TableRow>
                     </TableHeader>
-                    <TableBody>
+                    <TableBody className="table-stripe">
                       {(data.recentClaims || []).map((claim) => (
                         <TableRow
                           key={claim.id}

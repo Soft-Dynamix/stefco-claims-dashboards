@@ -34,6 +34,7 @@ import { ShortcutsOverlay } from '@/components/layout/shortcuts-overlay'
 import { AIChatPanel } from '@/components/layout/ai-chat-panel'
 import { QuickActionsFab } from '@/components/layout/quick-actions-fab'
 import { QuickStatsTooltip } from '@/components/dashboard/quick-stats-tooltip'
+import { StatusTicker } from '@/components/layout/status-ticker'
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
 import { Input } from '@/components/ui/input'
@@ -136,7 +137,7 @@ function SidebarNav({
                     <Icon className="size-5 shrink-0" />
                     <span className="truncate">{item.label}</span>
                     {showBadge && (
-                      <span className="ml-auto inline-flex items-center justify-center min-w-[20px] h-5 rounded-full bg-primary text-primary-foreground text-[10px] font-bold px-1.5 leading-none">
+                      <span className="nav-badge-count ml-auto inline-flex items-center justify-center min-w-[20px] h-5 rounded-full bg-primary text-primary-foreground text-[10px] font-bold px-1.5 leading-none">
                         {activeClaimsCount > 99 ? '99+' : activeClaimsCount}
                       </span>
                     )}
@@ -609,6 +610,7 @@ export default function AppLayout() {
 
       <div className="lg:pl-72 flex flex-col flex-1">
         <TopHeader />
+        <StatusTicker />
 
         <main className="flex-1 p-3 sm:p-4 lg:p-6 custom-scrollbar p-mobile-safe overflow-x-hidden relative z-0 scroll-indicator page-transition">
           <ActiveView />
