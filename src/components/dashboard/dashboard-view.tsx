@@ -90,6 +90,7 @@ import { QuickActionsPanel } from '@/components/dashboard/quick-actions-panel'
 import { QuickStatsWidget } from '@/components/dashboard/quick-stats-widget'
 import { StatusOverviewCards } from '@/components/dashboard/status-overview-cards'
 import { InsuranceScorecardWidget } from '@/components/dashboard/insurance-scorecard-widget'
+import { AgingReportWidget } from '@/components/dashboard/aging-report-widget'
 import { ClaimsPipelineWidget } from '@/components/claims/claims-pipeline-widget'
 import { formatDistanceToNow } from 'date-fns'
 import {
@@ -197,7 +198,7 @@ function StatsCard({
   borderColor?: string
 }) {
   return (
-    <Card className={`py-6 card-shine card-hover card-lift card-depth-1 hover:shadow-md transition-shadow duration-200 h-full card-enter fade-in-up card-premium ${borderColor || ''}`}>
+    <Card className={`py-6 card-shine card-hover card-lift card-depth-1 hover:shadow-md transition-shadow duration-200 h-full card-enter fade-in-up card-premium hover-lift-sm ${borderColor || ''}`}>
       <CardHeader className="pb-0">
         <div className="flex items-center justify-between">
           <CardTitle className="text-base font-medium text-muted-foreground">
@@ -644,7 +645,7 @@ export function DashboardView() {
           {/* Row 1: KPI Cards */}
           {/* Welcome Banner */}
           <FadeIn delay={0}>
-          <Card className="card-shine glass-card banner-gradient-animate bg-gradient-to-r from-primary/8 via-primary/3 to-accent/5 border-l-4 border-l-primary rounded-r-lg overflow-hidden">
+          <Card className="card-shine glass-card glass-card-enhanced banner-gradient-animate bg-gradient-to-r from-primary/8 via-primary/3 to-accent/5 border-l-4 border-l-primary rounded-r-lg overflow-hidden text-shadow-sm">
             <CardContent className="p-5 sm:p-7">
               <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
                 <div className="flex items-center gap-4">
@@ -785,7 +786,7 @@ export function DashboardView() {
             </FadeIn>
             {/* SLA Compliance Card */}
             <FadeIn delay={0.13}>
-              <Card className="py-6 card-shine card-hover card-lift hover:shadow-md transition-shadow duration-200 border-l-4 border-l-primary/30 h-full card-enter card-depth-2">
+              <Card className="py-6 card-shine card-hover card-lift hover:shadow-md transition-shadow duration-200 border-l-4 border-l-primary/30 h-full card-enter card-depth-2 hover-lift-sm">
               <CardHeader className="pb-0">
                 <div className="flex items-center justify-between">
                   <CardTitle className="text-base font-medium text-muted-foreground">
@@ -847,10 +848,11 @@ export function DashboardView() {
               <CardHeader>
                 <div className="flex items-center gap-2.5">
                   <BarChart3 className="size-5 text-muted-foreground" />
-                  <CardTitle className="text-base font-semibold gradient-heading">Claims by Status</CardTitle>
+                  <CardTitle className="text-base font-semibold gradient-heading text-shadow-sm">Claims by Status</CardTitle>
                 </div>
               </CardHeader>
               <CardContent>
+                <div className="chart-container-modern">
                 <ResponsiveContainer width="100%" height={280}>
                   <BarChart data={statusChartData}>
                     <CartesianGrid strokeDasharray="3 3" stroke="var(--color-border)" className="opacity-50" />
@@ -894,6 +896,7 @@ export function DashboardView() {
                     </Bar>
                   </BarChart>
                 </ResponsiveContainer>
+                </div>
               </CardContent>
             </Card>
 
@@ -902,7 +905,7 @@ export function DashboardView() {
               <CardHeader>
                 <div className="flex items-center gap-2">
                   <ArrowUpRight className="size-5 text-muted-foreground" />
-                  <CardTitle className="text-base font-semibold gradient-heading">Claims by Type</CardTitle>
+                  <CardTitle className="text-base font-semibold gradient-heading text-shadow-sm">Claims by Type</CardTitle>
                 </div>
               </CardHeader>
               <CardContent>
@@ -966,7 +969,7 @@ export function DashboardView() {
               <CardHeader>
                 <div className="flex items-center gap-2">
                   <TrendingUp className="size-5 text-muted-foreground" />
-                  <CardTitle className="text-base font-semibold gradient-heading">
+                  <CardTitle className="text-base font-semibold gradient-heading text-shadow-sm">
                     Claims Trend (30d)
                   </CardTitle>
                 </div>
@@ -1521,6 +1524,11 @@ export function DashboardView() {
             </CardContent>
           </Card>
           </div>
+          </FadeIn>
+
+          {/* Claims Aging Report Widget */}
+          <FadeIn delay={0.20}>
+            <AgingReportWidget />
           </FadeIn>
 
           {/* Row 7: Insurance Breakdown + Claim Aging Report */}

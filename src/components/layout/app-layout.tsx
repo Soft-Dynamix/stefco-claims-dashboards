@@ -126,7 +126,7 @@ function SidebarNav({
                     }}
                     className={`relative flex items-center gap-3 rounded-lg px-4 py-2.5 text-[15px] font-medium transition-all duration-200 cursor-pointer nav-indicator w-full link-animated hover-underline-center btn-press ${
                       isActive
-                        ? 'bg-primary/8 text-primary sidebar-active-glow shadow-glow nav-item-active'
+                        ? 'bg-primary/8 text-primary sidebar-active-glow shadow-glow nav-item-active sidebar-active-indicator'
                         : 'text-muted-foreground hover:bg-muted/40 hover:text-foreground hover:pl-5 transition-colors'
                     }`}
                   >
