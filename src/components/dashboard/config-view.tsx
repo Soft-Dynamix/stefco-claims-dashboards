@@ -60,6 +60,7 @@ import { ScrollArea } from '@/components/ui/scroll-area'
 import { toast } from 'sonner'
 import { FadeIn } from '@/components/ui/motion'
 import { ThemeSettingsPanel } from '@/components/dashboard/theme-settings-panel'
+import { KnowledgeBaseView } from '@/components/dashboard/knowledge-base-view'
 
 // ─── Scheduler & IMAP Status Types ──────────────────────────────────────────────
 
@@ -1660,6 +1661,11 @@ export function ConfigView() {
 
       {/* Self-Learning System */}
       <SelfLearningSystemPanel />
+
+      {/* Knowledge Base */}
+      <FadeIn delay={0.22}>
+        <KnowledgeBaseView />
+      </FadeIn>
 
       {/* System Information */}
       <Card className="py-5 card-enter stagger-9 hover-scale">

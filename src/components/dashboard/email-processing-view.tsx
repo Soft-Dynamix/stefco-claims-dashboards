@@ -64,6 +64,7 @@ import { toast } from 'sonner'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import { CardDescription } from '@/components/ui/card'
 import { useClaimsStore } from '@/store/claims-store'
+import { LearningAutoClassifyPanel } from '@/components/dashboard/learning-auto-classify-panel'
 
 // ── Types ──────────────────────────────────────────────────────────────────────
 
@@ -1531,6 +1532,11 @@ export function EmailProcessingView() {
       {/* Scheduler Control Panel */}
       <FadeIn delay={0.06}>
         <SchedulerControlPanel />
+      </FadeIn>
+
+      {/* AI Learning & Auto-Classification Panel */}
+      <FadeIn delay={0.07}>
+        <LearningAutoClassifyPanel />
       </FadeIn>
 
       {/* Real Email Status Card */}

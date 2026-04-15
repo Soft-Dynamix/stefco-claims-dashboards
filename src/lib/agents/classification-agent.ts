@@ -12,6 +12,8 @@
  */
 
 import { callAI } from '@/lib/ai-helpers'
+import { buildKnowledgeContext } from '@/lib/knowledge-base-service'
+import { extractEmailDomain } from '@/lib/folder-utils'
 
 export interface ClassificationResult {
   predictedClass: 'NEW_CLAIM' | 'IGNORE' | 'MISSING_INFO' | 'OTHER'
@@ -59,6 +61,8 @@ Classify the email into ONE of these classes:
 
 4. **Other** — The email doesn't fit the above categories but may still be relevant.
 
+HISTORICAL KNOWLEDGE:
+{knowledgeContext}
 PREPROCESSED SIGNALS (extracted before classification):
 - Possible claim number: {possibleClaimNumber}
 - Person names: {personNames}
@@ -110,6 +114,18 @@ export async function classifyWithAgent(params: {
   }
   learningHints?: string
 }): Promise<ClassificationResult> {
+  // Build knowledge context from the knowledge base (historical classifications for this sender)
+  let knowledgeContext = 'No historical data available for this sender.'
+  try {
+    const senderDomain = extractEmailDomain(params.from)
+    const context = await buildKnowledgeContext(senderDomain)
+    if (context) {
+      knowledgeContext = `(from sender domain: ${senderDomain})\n${context}`
+    }
+  } catch (kbErr) {
+    console.error('[classification-agent] Knowledge base context lookup failed (non-fatal):', kbErr)
+  }
+
   // Build follow-up signal summary for the prompt
   const fu = params.preprocessed.followUpSignals
   const followUpCount = fu
@@ -119,8 +135,9 @@ export async function classifyWithAgent(params: {
     ? `Reply=${fu.isReply}, Forward=${fu.isForward}, Follow-up phrases=${fu.hasFollowUpPhrases}, Status query=${fu.hasStatusQuery}, Existing claim ref=${fu.hasExistingClaimRef} (Strength: ${followUpCount}/5 signals${followUpCount >= 2 ? ' — STRONG, likely NOT a new claim' : followUpCount >= 1 ? ' — Weak, consider context' : ' — None detected'}). Detected phrases: [${fu.phrases.length > 0 ? fu.phrases.join(', ') : 'none'}]`
     : 'Not available'
 
-  // Build the prompt with preprocessed signals injected
+  // Build the prompt with knowledge context and preprocessed signals injected
   const prompt = CLASSIFICATION_AGENT_PROMPT
+    .replace('{knowledgeContext}', knowledgeContext)
     .replace('{possibleClaimNumber}', params.preprocessed.possibleClaimNumber || 'None found')
     .replace('{personNames}', params.preprocessed.personNames.join(', ') || 'None found')
     .replace('{dates}', params.preprocessed.dates.join(', ') || 'None found')

@@ -84,6 +84,7 @@ import { InsuranceComparisonChart } from '@/components/dashboard/insurance-compa
 import { ClaimsAnalyticsWidget } from '@/components/dashboard/claims-analytics-widget'
 import { PerformanceAnalytics } from '@/components/dashboard/performance-analytics'
 import { AIPerformanceWidget } from '@/components/dashboard/ai-performance-widget'
+import { KBStatsWidget } from '@/components/dashboard/kb-stats-widget'
 import { PrintQueueAnalytics } from '@/components/dashboard/print-queue-analytics'
 import { ResponseTimeTracker } from '@/components/dashboard/response-time-tracker'
 import { WeeklySummaryWidget } from '@/components/dashboard/weekly-summary-widget'
@@ -1038,23 +1039,28 @@ export function DashboardView() {
             <AIPerformanceWidget />
           </FadeIn>
 
+          {/* Knowledge Base Stats Widget */}
+          <FadeIn delay={0.21}>
+            <KBStatsWidget />
+          </FadeIn>
+
           {/* Print Queue Analytics Widget */}
-          <FadeIn delay={0.19}>
+          <FadeIn delay={0.23}>
             <PrintQueueAnalytics />
           </FadeIn>
 
           {/* Claim Response Time Tracker Widget */}
-          <FadeIn delay={0.21}>
+          <FadeIn delay={0.25}>
             <ResponseTimeTracker />
           </FadeIn>
 
           {/* Weekly Summary Widget */}
-          <FadeIn delay={0.23}>
+          <FadeIn delay={0.27}>
             <WeeklySummaryWidget />
           </FadeIn>
 
           {/* Duplicate Detection Widget */}
-          <FadeIn delay={0.25}>
+          <FadeIn delay={0.29}>
             <DuplicateDetectionWidget />
           </FadeIn>
 

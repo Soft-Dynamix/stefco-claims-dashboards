@@ -9,6 +9,8 @@ import { mkdir, writeFile } from 'fs/promises'
 import path from 'path'
 import { getLocalPath } from '@/lib/fs-helpers'
 import { getLearningHints, buildHintSection } from '@/lib/learning-engine'
+import { saveClassification } from '@/lib/knowledge-base-service'
+import crypto from 'crypto'
 
 // Multi-Agent imports
 import { processIntake } from '@/lib/agents/intake-agent'
@@ -169,6 +171,28 @@ export async function POST(request: NextRequest) {
     stageLog.push('CLASSIFIED')
 
     console.error(`[pipeline] Agent 3 (Classification): ${classification.predictedClass} @ ${(classification.confidence * 100).toFixed(0)}% — ${classification.reasoning}`)
+
+    // Save classification to the knowledge base for future few-shot learning
+    try {
+      const emailHash = crypto.createHash('sha256').update(`${intake.subject}|${emailBody.slice(0, 1000)}`).digest('hex')
+      await saveClassification({
+        senderDomain,
+        senderEmail: intake.senderEmail,
+        subject: intake.subject,
+        emailHash,
+        bodySnippet: preprocessed.cleanedBody || emailBody.slice(0, 500),
+        originalClassification: classification.predictedClass,
+        confidence: Math.round(classification.confidence * 100),
+        reasoning: classification.reasoning,
+        keywords: preprocessed.keywords,
+        followUpSignals: preprocessed.followUpSignals as Record<string, unknown> | undefined,
+        source: 'auto',
+        isActive: true,
+      })
+      console.error(`[pipeline] Knowledge base: saved classification for ${senderDomain}`)
+    } catch (kbErr) {
+      console.error('[pipeline] Knowledge base save failed (non-fatal):', kbErr)
+    }
 
     // If classified as IGNORE or OTHER, return early with audit log
     if (classification.predictedClass === 'IGNORE' || classification.predictedClass === 'OTHER') {

@@ -17,6 +17,7 @@ model InsuranceCompany {
   updatedAt        DateTime @updatedAt
   claims           Claim[]
   learningPatterns LearningPattern[]
+  senderPatterns   SenderPattern[]
 }
 
 model Claim {
@@ -65,6 +66,7 @@ model Claim {
   feedback            ClaimFeedback[]
   predictions         Prediction[]
   extractedEntities   ExtractedEntity[]
+  knowledgeEntries    ClassificationKnowledge[]
 }
 
 // ─── Multi-Agent Prediction System ────────────────────────────────────────────
@@ -180,4 +182,64 @@ model LearningPattern {
   lastAppliedAt       DateTime?
   createdAt           DateTime @default(now())
   updatedAt           DateTime @updatedAt
+}
+
+// ─── Strategic Knowledge Base ──────────────────────────────────────────────────
+// Stores classified email examples as training data for the AI classifier.
+// Each entry represents a historical email classification, optionally corrected by the user.
+// The system uses these as few-shot examples in the AI prompt to improve accuracy.
+
+model ClassificationKnowledge {
+  id                      String   @id @default(cuid())
+  claimId                 String?  // linked claim if one was created
+  claim                   Claim?   @relation(fields: [claimId], references: [id])
+  senderDomain            String   // email domain (e.g., "santam.co.za")
+  senderEmail             String?  // full sender email (masked for privacy)
+  subject                 String   // email subject line
+  emailHash               String   @unique // SHA-256 of (subject+body) for dedup
+  bodySnippet             String?  // first 500 chars of body for context
+  originalClassification  String   // what AI classified it as
+  correctedClassification String?  // what user corrected it to (null = AI was correct)
+  confidence              Int      @default(0) // AI confidence (0-100)
+  reasoning               String?  // AI reasoning
+  keywords                String?  // JSON: ["assessment", "motor", "follow-up"]
+  followUpSignals         String?  // JSON: detected follow-up signals
+  isCorrected             Boolean  @default(false) // user corrected the classification
+  source                  String   @default("auto") // "auto" | "corrected" | "manual"
+  isActive                Boolean  @default(true) // can be disabled
+  referenceCount          Int      @default(0) // how many times used in prompts
+  createdAt               DateTime @default(now())
+  updatedAt               DateTime @updatedAt
+}
+
+// ─── Sender Pattern Database ──────────────────────────────────────────────────
+// Stores learned patterns for each sender domain to improve classification speed.
+// Automatically updated from classification history. Used for fast pre-screening
+// before invoking the AI classifier.
+
+model SenderPattern {
+  id                      String   @id @default(cuid())
+  senderDomain            String   @unique // email domain
+  insuranceCompanyId      String?
+  insuranceCompany        InsuranceCompany? @relation(fields: [insuranceCompanyId], references: [id])
+  // Classification statistics per sender
+  totalEmails             Int      @default(0)
+  newClaimCount           Int      @default(0)
+  followUpCount           Int      @default(0)
+  missingInfoCount        Int      @default(0)
+  ignoreCount             Int      @default(0)
+  otherCount              Int      @default(0)
+  correctedCount          Int      @default(0) // how many times AI was wrong for this sender
+  // Learned patterns
+  typicalSubjectPatterns  String?  // JSON: common subject line patterns
+  claimNumberRegex        String?  // regex pattern for claim numbers from this sender
+  classificationHints     String?  // JSON: characteristic phrases and their typical classification
+  newClaimIndicators      String?  // JSON: phrases that strongly indicate new claims from this sender
+  followUpIndicators      String?  // JSON: phrases that strongly indicate follow-ups from this sender
+  // Performance metrics
+  accuracyRate            Float    @default(0) // percentage of correct classifications
+  avgConfidence           Float    @default(0) // average AI confidence for this sender
+  lastSeenAt              DateTime?
+  createdAt               DateTime @default(now())
+  updatedAt               DateTime @updatedAt
 }
