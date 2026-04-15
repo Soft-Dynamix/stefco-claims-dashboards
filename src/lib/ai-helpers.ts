@@ -114,6 +114,35 @@ async function autoDetectGeminiModel(apiKey: string): Promise<string | null> {
  * Get AI provider config from SystemConfig + env vars.
  * Returns ALL configured keys so callers can build a fallback chain.
  */
+/** Validate an API key format for a given provider. Returns true if it looks valid. */
+function isValidKeyFormat(provider: string, key: string): boolean {
+  if (!key || key.length < 10) return false
+  switch (provider) {
+    case 'gemini': return key.startsWith('AIza') && key.length >= 20
+    case 'groq': return key.startsWith('gsk_') && key.length >= 20
+    case 'openrouter': return key.startsWith('sk-or-') && key.length >= 20
+    default: return key.length >= 10
+  }
+}
+
+/** Known-valid Gemini model names to prevent typos/bad model errors. */
+const VALID_GEMINI_MODELS = [
+  'gemini-2.5-flash',
+  'gemini-2.5-pro',
+  'gemini-2.0-flash',
+  'gemini-2.0-flash-lite',
+  'gemini-2.0-flash-exp',
+  'gemini-1.5-flash',
+  'gemini-1.5-flash-8b',
+  'gemini-1.5-pro',
+  'gemini-1.0-pro',
+  'gemini-pro',
+]
+
+function isValidGeminiModel(model: string): boolean {
+  return VALID_GEMINI_MODELS.some(m => model === m || model.startsWith(m + '-'))
+}
+
 async function getAIConfig() {
   const { db } = await import('@/lib/db')
 
@@ -132,7 +161,14 @@ async function getAIConfig() {
     for (const c of configs) map[c.key] = c.value
 
     provider = map['ai_provider'] || provider
+    // Prefer gemini_model over ai_model to avoid stale/invalid model names
     model = map['gemini_model'] || map['ai_model'] || model
+
+    // Validate Gemini model — fall back to known-good default if invalid
+    if ((provider === 'gemini') && !isValidGeminiModel(model)) {
+      console.error(`[ai-helpers] Invalid Gemini model "${model}" configured. Falling back to gemini-2.0-flash.`)
+      model = 'gemini-2.0-flash'
+    }
 
     // Collect ALL keys, not just the primary one
     geminiKey = map['gemini_api_key'] || process.env.GEMINI_API_KEY || ''
@@ -266,8 +302,21 @@ async function tryProvider(
         continue // Try next URL version
       } else if (res.status === 400) {
         const err = await res.text().catch(() => 'Unknown error')
+        // Differentiate between auth error (key invalid) and other 400 errors
+        if (err.includes('API_KEY_INVALID') || err.includes('API key not valid')) {
+          console.error(`[ai-helpers] Gemini API key is INVALID (400). Do NOT retry — fix the API key in Settings.`)
+          break // Fatal error — no point retrying with bad key
+        }
         console.error(`[ai-helpers] Gemini API 400 for model ${model}: ${err}`)
-        continue // Try next URL version
+        continue // Try next URL version (may be model-specific)
+      } else if (res.status === 403) {
+        const err = await res.text().catch(() => 'Unknown error')
+        console.error(`[ai-helpers] Gemini API 403 (FORBIDDEN) — API key lacks permission or is blocked. Fix the API key in Settings.`)
+        break // Fatal error — no point retrying
+      } else if (res.status === 429) {
+        const err = await res.text().catch(() => 'Unknown error')
+        console.error(`[ai-helpers] Gemini API 429 (RATE LIMITED) — too many requests. Will retry or fall back to another provider.`)
+        break // Retriable — let the fallback chain handle it
       } else {
         const err = await res.text().catch(() => 'Unknown error')
         console.error(`[ai-helpers] Gemini API error: ${res.status} ${err}`)
@@ -326,9 +375,10 @@ async function tryProvider(
 
 /**
  * Call AI API with a proper fallback chain.
- * 1. Try primary provider (Gemini/Groq/OpenRouter) as configured
- * 2. If retriable error (429, 500, 502, 503), try OTHER configured providers
- * 3. Try z-ai-web-dev-sdk as LAST resort (sandbox only)
+ * 1. Validate API key formats BEFORE making any API calls (avoid wasted requests)
+ * 2. Try primary provider (Gemini/Groq/OpenRouter) as configured
+ * 3. If retriable error (429, 500, 502, 503), try OTHER configured providers
+ * 4. Try z-ai-web-dev-sdk as LAST resort (sandbox only)
  * Exported for use by agent modules.
  */
 export async function callAI(systemPrompt: string, userMessage: string, model?: string): Promise<string> {
@@ -339,15 +389,28 @@ export async function callAI(systemPrompt: string, userMessage: string, model?: 
   console.error(`[ai-helpers] Configured keys — gemini: ${!!config.geminiKey}, groq: ${!!config.groqKey}, openrouter: ${!!config.openrouterKey}`)
 
   // Build ordered provider list: primary first, then other configured providers as fallbacks
+  // Skip providers with invalid key formats early to avoid wasting API calls
   const providerList: Array<{ provider: string; apiKey: string; model: string }> = []
 
-  // Add primary provider if it has a key
+  // Add primary provider if it has a VALID key
   if (config.provider === 'gemini' && config.geminiKey) {
-    providerList.push({ provider: 'gemini', apiKey: config.geminiKey, model: primaryModel })
+    if (isValidKeyFormat('gemini', config.geminiKey)) {
+      providerList.push({ provider: 'gemini', apiKey: config.geminiKey, model: primaryModel })
+    } else {
+      console.error(`[ai-helpers] SKIP primary gemini — invalid API key format (starts with "${config.geminiKey.substring(0, 4)}", len=${config.geminiKey.length}). Expected: starts with "AIza", >= 20 chars.`)
+    }
   } else if (config.provider === 'groq' && config.groqKey) {
-    providerList.push({ provider: 'groq', apiKey: config.groqKey, model: primaryModel })
+    if (isValidKeyFormat('groq', config.groqKey)) {
+      providerList.push({ provider: 'groq', apiKey: config.groqKey, model: primaryModel })
+    } else {
+      console.error(`[ai-helpers] SKIP primary groq — invalid API key format.`)
+    }
   } else if (config.provider === 'openrouter' && config.openrouterKey) {
-    providerList.push({ provider: 'openrouter', apiKey: config.openrouterKey, model: primaryModel })
+    if (isValidKeyFormat('openrouter', config.openrouterKey)) {
+      providerList.push({ provider: 'openrouter', apiKey: config.openrouterKey, model: primaryModel })
+    } else {
+      console.error(`[ai-helpers] SKIP primary openrouter — invalid API key format.`)
+    }
   }
 
   // Add other configured providers as fallbacks (using default models for each)
@@ -357,13 +420,13 @@ export async function callAI(systemPrompt: string, userMessage: string, model?: 
     ['openrouter', config.openrouterKey],
   ]
   for (const [p, key] of fallbackEntries) {
-    if (p !== config.provider && key) {
+    if (p !== config.provider && key && isValidKeyFormat(p, key)) {
       providerList.push({ provider: p, apiKey: key, model: PROVIDER_DEFAULT_MODELS[p] })
     }
   }
 
   if (providerList.length === 0) {
-    console.error(`[ai-helpers] WARNING: No API keys configured for any provider. Trying z-ai-web-dev-sdk fallback.`)
+    console.error(`[ai-helpers] WARNING: No valid API keys configured for any provider. Check your Gemini/Groq/OpenRouter API keys in Settings. Trying z-ai-web-dev-sdk fallback.`)
   } else {
     // Try each provider in order
     for (const attempt of providerList) {

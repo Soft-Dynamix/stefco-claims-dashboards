@@ -2623,3 +2623,49 @@ bun run build && bun run start  # Production
 - ✅ Mobile responsive
 - ✅ 6-Agent AI pipeline integrated
 - ✅ Self-learning engine active
+
+---
+Task ID: 11
+Agent: Main Agent
+Task: Fix Gemini AI not working — investigate and resolve misleading rate limit errors
+
+Work Log:
+- Investigated user report: "Gemini AI not working and complaining about limit reach but it does not make sense"
+- Found root cause: DB had `gemini_api_key = "test123"` (invalid placeholder key, 7 chars)
+- Found secondary issue: DB had `ai_model = "gemini-2.5-flash-preview-05-20"` (non-existent model name)
+- Found `gemini_model = "gemini-2.0-flash"` was correct but wasn't being preferred
+- Traced the error flow: ai-helpers.ts sent "test123" to Gemini API → got 400 "API key not valid" → silently fell through to z-ai-web-dev-sdk fallback → user never saw the real error
+- The z-ai-web-dev-sdk fallback in production would show its own errors (potentially rate limits), confusing the user
+
+Fixes Applied:
+1. **ai-helpers.ts** — Added `isValidKeyFormat()` function to validate API key format BEFORE making any API calls (Gemini: starts with "AIza", >= 20 chars; Groq: starts with "gsk_"; OpenRouter: starts with "sk-or-")
+2. **ai-helpers.ts** — Added `isValidGeminiModel()` with whitelist of known-valid model names (gemini-2.5-flash, gemini-2.0-flash, etc.) to prevent bad model errors
+3. **ai-helpers.ts** — `getAIConfig()` now validates model name and auto-falls-back to "gemini-2.0-flash" if invalid
+4. **ai-helpers.ts** — `callAI()` now skips providers with invalid key formats early (no wasted API calls), with clear log messages explaining WHY the key was skipped
+5. **ai-helpers.ts** — `tryProvider()` Gemini handler now differentiates error types:
+   - 400 + "API_KEY_INVALID" → Fatal: stop retrying, log "fix your API key"
+   - 403 → Fatal: key blocked/forbidden
+   - 429 → Retriable: log actual rate limit, let fallback chain handle
+   - 400 (other) → May be model-specific, try alternate URL
+6. **DB cleanup** — Cleared invalid "test123" API key, fixed `ai_model` to "gemini-2.0-flash"
+7. **installation-manager-view.tsx** — Split "AI rate limited" troubleshooting into two separate entries: "AI not working (invalid key)" with clear instructions + links, and "AI rate limited (429)" with specific rate limit info
+8. **setup-guide-view.tsx** — Updated FAQ to mention where to get free Gemini API key and clarify that the key must start with "AIza"
+
+Stage Summary:
+- Root cause: Invalid API key "test123" in DB + invalid model name "gemini-2.5-flash-preview-05-20"
+- The system was silently falling back to z-ai-web-dev-sdk, hiding the real error from the user
+- 3 files modified: ai-helpers.ts, installation-manager-view.tsx, setup-guide-view.tsx
+- DB values corrected: gemini_api_key cleared, ai_model fixed
+- Lint: 0 errors, 0 warnings
+- Dev server recompiled successfully
+
+## What the user needs to do:
+1. Get a free Gemini API key at https://aistudio.google.com/apikey
+2. Go to **Settings → AI Provider** in the dashboard
+3. Enter the key (starts with "AIza", ~39 characters)
+4. Click **Test Connection** to verify
+5. Save settings
+
+## Priority Recommendations for Next Phase:
+- Consider adding a banner/alert on the Settings page when no valid API key is configured
+- Add an onboarding toast notification pointing users to the AI key setup when they first open the app

@@ -197,9 +197,25 @@ const COMMON_ISSUES = [
     steps: ['Verify SMTP_HOST, SMTP_PORT, credentials', 'Some providers use port 465 instead of 587', 'Test credentials with an email client', 'Check if your IP is blocked'],
   },
   {
-    title: 'AI rate limited',
-    description: 'API returns 429 errors due to rate limiting.',
-    steps: ['Free tier has limited requests per minute/day', 'System falls back to alternative providers', 'Consider upgrading to a paid plan', 'Reduce email polling frequency'],
+    title: 'AI not working (invalid key)',
+    description: 'API returns errors because the key is missing or invalid.',
+    steps: [
+      'Go to Settings → AI Provider and enter a valid API key',
+      'Gemini keys must start with "AIza" and be 30+ characters',
+      'Get a free key at: https://aistudio.google.com/apikey',
+      'Groq keys must start with "gsk_" — get one at: https://console.groq.com',
+      'After saving, click "Test Connection" to verify',
+    ],
+  },
+  {
+    title: 'AI rate limited (429)',
+    description: 'API returns 429 errors — too many requests in a short time.',
+    steps: [
+      'Free tier limits: Gemini ~15 RPM / 1,500 RPD',
+      'Reduce email polling frequency in Settings (e.g., every 5 min instead of 1 min)',
+      'System automatically falls back to other providers if configured',
+      'Consider upgrading to a paid API plan for higher limits',
+    ],
   },
   {
     title: 'Port conflicts',

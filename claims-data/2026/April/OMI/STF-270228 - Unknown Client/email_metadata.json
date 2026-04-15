@@ -1,0 +1,48 @@
+{
+  "claimId": "cmnzo0ufv00ivlah8cphw84va",
+  "claimNumber": "STF-270228",
+  "clientName": "Unknown Client",
+  "senderEmail": "bindercomms@ominsure.co.za",
+  "emailSubject": "Automatic reply",
+  "emailBody": "Dear Valued Business Partner.\r\n\r\nThank you for your e-mail and we acknowledge receipt of your request and will be allocated to an administrator or Assessor to assist.\r\n\r\nPlease take note that this mailbox is utilized for ;  Escalations  Queries  Approved reports  Authorisations.\r\n\r\nKind regards\r\n\r\nOLD MUTUAL INSURE\r\nMOTOR CLAIMS DIGITAL ASSESSING\r\nOld Mutual Insure, Wanooka Place, St Andrews Road, Parktown\r\nAuthorised Financial Services Provider\r\nA Member of the Old Mutual Group\r\nwww.ominsure.co.za<http://www.ominsure.co.za>\r\nOld Mutual Insure Limited, Registration Number 1970/006619/06 is a licensed FSP and Non-Life Insurer. Click here https://www.oldmutual.co.za/old-mutual-insure-disclaimer/ to read the Old Mutual Insure Limited legal notice.",
+  "claimType": "Motor",
+  "insuranceCompany": "Old Mutual Insure",
+  "attachments": [],
+  "extraction": {
+    "claim_number": null,
+    "client_name": null,
+    "insurance_company": null,
+    "claim_type": null,
+    "contact_number": null,
+    "contact_email": null,
+    "incident_description": null,
+    "excess_amount": null,
+    "special_instructions": null,
+    "vehicle_make": null,
+    "vehicle_model": null,
+    "vehicle_year": null,
+    "vehicle_registration": null
+  },
+  "classification": {
+    "predictedClass": "NEW_CLAIM",
+    "confidence": 0.95,
+    "alternatives": [
+      {
+        "class": "IGNORE",
+        "score": 0.2
+      },
+      {
+        "class": "MISSING_INFO",
+        "score": 0
+      }
+    ],
+    "reasoning": "Fallback heuristic classification — AI API unavailable. Based on keyword matching and preprocessed signals."
+  },
+  "overallConfidence": 38,
+  "isDuplicate": false,
+  "_meta": {
+    "savedAt": "2026-04-15T06:24:30.242Z",
+    "localPath": "/home/z/my-project/claims-data/2026/April/OMI/STF-270228 - Unknown Client",
+    "originalFolderPath": "Z:\\2026\\April\\OMI\\STF-270228 - Unknown Client"
+  }
+}

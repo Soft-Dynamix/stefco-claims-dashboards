@@ -232,8 +232,8 @@ const faqItems = [
     answer: 'Check your firewall settings — IMAP uses port 993 (SSL/TLS). Ensure your email provider allows IMAP access (some providers require you to explicitly enable it). If using Gmail, you need an "App Password" rather than your regular password. Verify the IMAP_HOST and IMAP_PORT in your .env file.',
   },
   {
-    question: 'AI classification is inaccurate',
-    answer: 'This usually happens when the Gemini API key is missing or rate-limited. Check that your GEMINI_API_KEY is valid and has sufficient quota. The free tier allows 15 requests per minute and 1,500 per day. If you exceed this, the system falls back to Groq or Ollama. You can also try lowering the CONFIDENCE_THRESHOLD to flag more claims for manual review.',
+    question: 'AI classification is inaccurate or not working',
+    answer: 'First, check that you have a valid API key in Settings → AI Provider. Gemini keys must start with "AIza" (get one free at https://aistudio.google.com/apikey). If the key is valid but you see rate limit errors (429), the free tier allows 15 requests per minute and 1,500 per day. The system automatically falls back to other providers (Groq, OpenRouter) if configured. You can also lower the CONFIDENCE_THRESHOLD to flag more claims for manual review.',
   },
   {
     question: 'Folder permission issues on Windows share',
