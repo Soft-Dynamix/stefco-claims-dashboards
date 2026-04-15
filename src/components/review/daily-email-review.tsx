@@ -278,7 +278,7 @@ function EmailReviewCard({
             </div>
             <div className="flex items-start gap-2 text-muted-foreground">
               <FileText className="size-3.5 shrink-0 mt-0.5 text-sky-500" />
-              <span className="line-clamp-2 text-xs">{item.emailSubject || 'No subject'}</span>
+              <span className="text-xs leading-relaxed">{item.emailSubject || 'No subject'}</span>
             </div>
           </div>
 
@@ -298,7 +298,7 @@ function EmailReviewCard({
               )}
             </div>
             {item.aiReasoning && (
-              <p className="text-[11px] text-muted-foreground line-clamp-2 pl-5.5 italic bg-muted/30 rounded-md px-2.5 py-1.5">
+              <p className="text-[11px] text-muted-foreground pl-5.5 italic bg-muted/30 rounded-md px-2.5 py-1.5 leading-relaxed">
                 &ldquo;{item.aiReasoning}&rdquo;
               </p>
             )}
@@ -571,7 +571,7 @@ export default function DailyEmailReview({ open, onOpenChange }: DailyReviewProp
 
   return (
     <Sheet open={open} onOpenChange={onOpenChange}>
-      <SheetContent side="right" className="w-full sm:w-[620px] lg:w-[680px] p-0 flex flex-col overflow-hidden">
+      <SheetContent side="right" className="w-full sm:w-[700px] lg:w-[800px] p-0 flex flex-col overflow-hidden">
         {/* ── Header ── */}
         <SheetHeader className="p-4 pb-3 space-y-3 border-b shrink-0 bg-gradient-to-b from-primary/5 to-transparent">
           <div className="flex items-start justify-between pr-6">

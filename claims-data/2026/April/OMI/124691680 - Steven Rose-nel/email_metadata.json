@@ -1,0 +1,48 @@
+{
+  "claimId": "cmnzpzml400uhlah8bb5k6p0s",
+  "claimNumber": "124691680",
+  "clientName": "Steven Rose-nel",
+  "senderEmail": "web.noreply@ominsure.co.za",
+  "emailSubject": "RE: RE: Claim:124691680, Client:Steven Rose-nel, BrokerRef:700116204, Policy:700116204",
+  "emailBody": "[https://widgets.ominsure.co.za/synapse/common/content/img/banner.png]\r\n\r\nINSURE\r\n\r\nWanooka Place, St Andrews Road, Parktown, Johannesburg, 2193\r\nTel +27 (0)11 374 9111. www.ominsure.co.za\r\n\r\n\r\n\r\nTo whom it may concern\r\n\r\nThank you for your email.\r\nYour email reference is 41285466\r\n\r\nPlease call 0861 247 365 during operating hours for any enquires.\r\n\r\nKind regards\r\nThe Claims Team\r\n\r\n[https://widgets.ominsure.co.za/synapse/common/content/img/omi_email_footer_english.jpg] Old Mutual Insure Limited, Registration Number 1970/006619/06 is a licensed FSP and Non-Life Insurer. Click here https://www.oldmutual.co.za/old-mutual-insure-disclaimer/ to read the Old Mutual Insure Limited legal notice.",
+  "claimType": "Motor",
+  "insuranceCompany": "Old Mutual Insure",
+  "attachments": [],
+  "extraction": {
+    "claim_number": "124691680",
+    "client_name": "Steven Rose-nel",
+    "insurance_company": "Old Mutual Insure Limited",
+    "claim_type": null,
+    "contact_number": "0861 247 365",
+    "contact_email": null,
+    "incident_description": null,
+    "excess_amount": null,
+    "special_instructions": null,
+    "vehicle_make": null,
+    "vehicle_model": null,
+    "vehicle_year": null,
+    "vehicle_registration": null
+  },
+  "classification": {
+    "predictedClass": "NEW_CLAIM",
+    "confidence": 0.8500000000000001,
+    "alternatives": [
+      {
+        "class": "IGNORE",
+        "score": 0.2
+      },
+      {
+        "class": "MISSING_INFO",
+        "score": 0
+      }
+    ],
+    "reasoning": "Fallback heuristic classification — AI API unavailable. Based on keyword matching and preprocessed signals."
+  },
+  "overallConfidence": 70,
+  "isDuplicate": false,
+  "_meta": {
+    "savedAt": "2026-04-15T07:19:32.636Z",
+    "localPath": "/home/z/my-project/claims-data/2026/April/OMI/124691680 - Steven Rose-nel",
+    "originalFolderPath": "Z:\\2026\\April\\OMI\\124691680 - Steven Rose-nel"
+  }
+}

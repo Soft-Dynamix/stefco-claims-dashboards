@@ -413,8 +413,6 @@ function EmailDetailPanel({
   onMarkIgnore: () => void
   onClose: () => void
 }) {
-  const [showBody, setShowBody] = useState(false)
-
   return (
     <div className="h-full flex flex-col">
       {/* Header */}
@@ -456,28 +454,13 @@ function EmailDetailPanel({
                 <p className="text-sm text-foreground">{formatDate(email.receivedAt)}</p>
               </div>
 
-              {/* Body Preview */}
+              {/* Body — always fully visible */}
               <Separator />
               <div>
                 <span className="text-[11px] text-muted-foreground">Body</span>
-                <pre className={`text-sm text-foreground/80 whitespace-pre-wrap font-sans mt-1 transition-all ${
-                  showBody ? '' : 'max-h-24 overflow-hidden relative'
-                }`}>
+                <pre className="text-sm text-foreground/80 whitespace-pre-wrap font-sans mt-1 p-3 rounded-md bg-muted/20 border leading-relaxed">
                   {email.body}
                 </pre>
-                {!showBody && email.body.length > 200 && (
-                  <div className="relative -mt-8 h-8 bg-gradient-to-t from-muted/20 to-transparent" />
-                )}
-                {email.body.length > 200 && (
-                  <Button
-                    variant="ghost"
-                    size="sm"
-                    className="text-xs mt-1"
-                    onClick={() => setShowBody(!showBody)}
-                  >
-                    {showBody ? 'Show less' : 'Read more'}
-                  </Button>
-                )}
               </div>
 
               {/* Attachments */}
@@ -1741,8 +1724,8 @@ export function EmailProcessingView() {
         <FadeIn delay={0.15}>
           <Card className="overflow-hidden card-enter stagger-2">
             <CardContent className="p-0">
-              <div className="grid grid-cols-1 lg:grid-cols-2 divide-y lg:divide-y-0 lg:divide-x divide-border">
-                {/* Left: Raw email - shown in a scrollable area */}
+              <div className="grid grid-cols-1 xl:grid-cols-2 divide-y xl:divide-y-0 xl:divide-x divide-border">
+                {/* Left: Raw email - shown in a larger scrollable area */}
                 <div className="min-h-0">
                   <div className="px-4 py-3 border-b bg-muted/20">
                     <h4 className="text-xs font-medium text-muted-foreground uppercase tracking-wider flex items-center gap-1.5">
@@ -1750,7 +1733,7 @@ export function EmailProcessingView() {
                       Email Preview
                     </h4>
                   </div>
-                  <ScrollArea className="max-h-[500px]">
+                  <ScrollArea className="max-h-[700px]">
                     <div className="p-4 space-y-4">
                       <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                         <div>
@@ -1764,11 +1747,11 @@ export function EmailProcessingView() {
                       </div>
                       <div>
                         <span className="text-[11px] text-muted-foreground">Subject</span>
-                        <p className="text-sm font-medium text-foreground">{selectedEmail.subject}</p>
+                        <p className="text-sm font-medium text-foreground leading-relaxed">{selectedEmail.subject}</p>
                       </div>
                       <div>
                         <span className="text-[11px] text-muted-foreground">Body</span>
-                        <pre className="text-sm text-foreground/80 whitespace-pre-wrap font-sans mt-1 p-3 rounded-md bg-muted/20 border">
+                        <pre className="text-sm text-foreground/80 whitespace-pre-wrap font-sans mt-1 p-3 rounded-md bg-muted/20 border leading-relaxed">
                           {selectedEmail.body}
                         </pre>
                       </div>
