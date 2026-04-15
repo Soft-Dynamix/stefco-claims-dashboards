@@ -357,16 +357,14 @@ export function AuditView() {
               </div>
             </ScrollArea>
           ) : (
-            <div className="flex flex-col items-center justify-center py-16 gap-3">
-              <div className="flex items-center justify-center size-14 rounded-full bg-muted/50">
-                <ClipboardList className="size-7 text-muted-foreground/40" />
+            <div className="empty-state">
+              <div className="empty-state-icon">
+                <ClipboardList className="size-7" />
               </div>
-              <div className="text-center">
-                <p className="text-sm font-medium text-foreground">No audit logs found</p>
-                <p className="text-xs text-muted-foreground mt-1">
-                  {(statusFilter !== 'ALL' || claimIdFilter) ? 'No logs match your current filters. Try adjusting your search criteria.' : 'Audit log entries will appear here as claims are processed.'}
-                </p>
-              </div>
+              <p className="empty-state-title">No audit logs found</p>
+              <p className="empty-state-description">
+                {(statusFilter !== 'ALL' || claimIdFilter) ? 'No logs match your current filters. Try adjusting your search criteria.' : 'Audit log entries will appear here as claims are processed.'}
+              </p>
               {(statusFilter !== 'ALL' || claimIdFilter) && (
                 <Button variant="outline" size="sm" className="mt-1 btn-press" onClick={() => { setStatusFilter('ALL'); setClaimIdFilter('') }}>
                   Clear Filters

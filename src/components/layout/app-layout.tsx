@@ -30,7 +30,8 @@ import { ThemeToggle } from '@/components/layout/theme-toggle'
 import { NotificationDropdown } from '@/components/layout/notification-dropdown'
 import { CommandPalette } from '@/components/layout/command-palette'
 import { KeyboardShortcuts } from '@/components/layout/keyboard-shortcuts'
-import { ShortcutsOverlay } from '@/components/layout/shortcuts-overlay'
+import { GlobalHotkeys } from '@/components/layout/global-hotkeys'
+import { KeyboardShortcutsOverlay } from '@/components/layout/keyboard-shortcuts-overlay'
 import { AIChatPanel } from '@/components/layout/ai-chat-panel'
 import { QuickActionsFab } from '@/components/layout/quick-actions-fab'
 import { QuickStatsTooltip } from '@/components/dashboard/quick-stats-tooltip'
@@ -127,7 +128,7 @@ function SidebarNav({
                     }}
                     className={`sidebar-nav-item ${isActive ? 'sidebar-active-item' : ''}`}
                   >
-                    <Icon className="size-5 shrink-0" />
+                    <Icon className={`size-5 shrink-0 transition-colors duration-200 ${isActive ? 'text-primary' : ''}`} />
                     <span className="truncate">{item.label}</span>
                     {showBadge && (
                       <span className="nav-badge-count ml-auto inline-flex items-center justify-center min-w-[20px] h-5 rounded-full bg-primary text-primary-foreground text-[10px] font-bold px-1.5 leading-none">
@@ -598,7 +599,8 @@ export default function AppLayout() {
       <DesktopSidebar />
       <MobileSidebar open={sidebarOpen} onOpenChange={setSidebarOpen} />
       <KeyboardShortcuts />
-      <ShortcutsOverlay />
+      <GlobalHotkeys />
+      <KeyboardShortcutsOverlay />
       <CommandPalette />
 
       <div className="lg:pl-72 flex flex-col flex-1">

@@ -3064,4 +3064,173 @@ body, header, nav, aside, footer {
 }
 
 
+/* ========================================
+   Task 12d-1: Comprehensive Styling Improvements
+   ======================================== */
+
+/* --- 1. Interactive Card hover effect --- */
+.card-interactive {
+  transition: all 0.2s ease-out;
+}
+.card-interactive:hover {
+  box-shadow: 0 4px 12px oklch(0 0 0 / 0.08), 0 1px 3px oklch(0 0 0 / 0.04);
+  transform: translateY(-2px);
+  border-color: oklch(0.72 0.12 165 / 20%);
+}
+.card-interactive:active {
+  transform: translateY(0);
+  box-shadow: 0 1px 2px oklch(0 0 0 / 0.06);
+}
+:is(.dark) .card-interactive:hover {
+  box-shadow: 0 4px 12px oklch(0 0 0 / 0.3), 0 1px 3px oklch(0 0 0 / 0.2);
+  border-color: oklch(0.72 0.12 165 / 25%);
+}
+
+/* --- 2. Empty State components --- */
+.empty-state {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 3rem 1.5rem;
+  text-align: center;
+}
+.empty-state-icon {
+  width: 4rem;
+  height: 4rem;
+  border-radius: 50%;
+  background: oklch(0.97 0.005 165);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-bottom: 1rem;
+  color: oklch(0.556 0.01 165);
+  opacity: 0.6;
+}
+:is(.dark) .empty-state-icon {
+  background: oklch(0.269 0.008 165);
+  color: oklch(0.708 0.01 165);
+}
+.empty-state-title {
+  font-size: 1.125rem;
+  font-weight: 600;
+  color: oklch(0.145 0.005 165 / 80%);
+  margin-bottom: 0.25rem;
+}
+:is(.dark) .empty-state-title {
+  color: oklch(0.985 0.005 260 / 80%);
+}
+.empty-state-description {
+  font-size: 0.875rem;
+  color: oklch(0.556 0.01 165);
+  max-width: 24rem;
+}
+:is(.dark) .empty-state-description {
+  color: oklch(0.708 0.01 165);
+}
+
+/* --- 3. Status Dot indicators --- */
+.status-dot-indicator {
+  display: inline-block;
+  width: 0.5rem;
+  height: 0.5rem;
+  border-radius: 50%;
+  animation: statusDotPulse 2s ease-in-out infinite;
+}
+@keyframes statusDotPulse {
+  0%, 100% { opacity: 1; transform: scale(1); }
+  50% { opacity: 0.6; transform: scale(1.2); }
+}
+.status-dot-success { background-color: oklch(0.696 0.17 162.48); }
+.status-dot-warning { background-color: oklch(0.795 0.184 86.047); }
+.status-dot-error { background-color: oklch(0.577 0.245 27.325); }
+.status-dot-info { background-color: oklch(0.623 0.214 259.815); }
+
+/* --- 4. Button glow sweep effect --- */
+.btn-glow {
+  position: relative;
+  overflow: hidden;
+}
+.btn-glow::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(90deg, transparent, oklch(0.72 0.12 165 / 10%), transparent);
+  transform: translateX(-100%);
+  transition: transform 0.5s ease;
+  pointer-events: none;
+}
+.btn-glow:hover::before {
+  transform: translateX(100%);
+}
+:is(.dark) .btn-glow::before {
+  background: linear-gradient(90deg, transparent, oklch(0.72 0.12 165 / 8%), transparent);
+}
+
+/* --- 5. Smooth theme transition --- */
+.theme-transition {
+  transition: color 0.3s ease-in-out, background-color 0.3s ease-in-out, border-color 0.3s ease-in-out;
+}
+
+/* --- 6. Data Grid table layout --- */
+.data-grid {
+  width: 100%;
+  border-collapse: separate;
+  border-spacing: 0;
+}
+.data-grid th {
+  position: sticky;
+  top: 0;
+  z-index: 10;
+  background: oklch(1 0 0 / 95%);
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+  border-bottom: 1px solid oklch(0.922 0.005 165);
+  font-size: 0.75rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: oklch(0.556 0.01 165);
+  padding: 0.75rem 1rem;
+  text-align: left;
+}
+:is(.dark) .data-grid th {
+  background: oklch(0.14 0.005 260 / 95%);
+  border-bottom: 1px solid oklch(1 0 0 / 10%);
+  color: oklch(0.708 0.01 165);
+}
+.data-grid td {
+  padding: 0.75rem 1rem;
+  border-bottom: 1px solid oklch(0.922 0.005 165 / 50%);
+  font-size: 0.875rem;
+}
+:is(.dark) .data-grid td {
+  border-bottom: 1px solid oklch(1 0 0 / 5%);
+}
+.data-grid tbody tr {
+  transition: background-color 0.15s ease;
+}
+.data-grid tbody tr:hover {
+  background-color: oklch(0.97 0.005 165 / 50%);
+}
+:is(.dark) .data-grid tbody tr:hover {
+  background-color: oklch(0.269 0.008 165 / 50%);
+}
+
+/* --- 7. Enhanced Sidebar Active Item for Mobile --- */
+@media (max-width: 1023px) {
+  .sidebar-active-item {
+    background: oklch(0.72 0.12 165 / 0.14);
+    box-shadow: inset 3px 0 0 var(--color-primary);
+  }
+  :is(.dark) .sidebar-active-item {
+    background: oklch(0.72 0.12 165 / 0.18);
+  }
+}
+@media (min-width: 1024px) {
+  .sidebar-active-item {
+    animation: nav-indicator-slide 0.3s cubic-bezier(0.4, 0, 0.2, 1) forwards;
+  }
+}
+
 @import "./utilities.css";

@@ -2454,10 +2454,13 @@ export function ClaimsView() {
                     ) : (
                       <TableRow>
                         <TableCell colSpan={columns.length} className="h-24 text-center">
-                          <div className="flex flex-col items-center gap-2">
-                            <RotateCcw className="size-8 text-muted-foreground/50" />
-                            <p className="text-muted-foreground">
-                              No claims found matching your filters.
+                          <div className="empty-state">
+                            <div className="empty-state-icon">
+                              <RotateCcw className="size-7" />
+                            </div>
+                            <p className="empty-state-title">No claims found</p>
+                            <p className="empty-state-description">
+                              No claims match your current filters. Try adjusting your search criteria.
                             </p>
                           </div>
                         </TableCell>

@@ -8,6 +8,7 @@ interface ClaimsState {
   selectedEmailId: string | null
   showNewClaimDialog: boolean
   showCommandPalette: boolean
+  showShortcutsOverlay: boolean
   filters: {
     status: string
     claimType: string
@@ -24,6 +25,7 @@ interface ClaimsState {
   setSelectedEmailId: (id: string | null) => void
   setShowNewClaimDialog: (show: boolean) => void
   setShowCommandPalette: (show: boolean) => void
+  setShowShortcutsOverlay: (show: boolean) => void
   setFilter: (key: keyof ClaimsState['filters'], value: string) => void
   clearFilters: () => void
   triggerRefresh: () => void
@@ -46,6 +48,7 @@ export const useClaimsStore = create<ClaimsState>((set) => ({
   selectedEmailId: null,
   showNewClaimDialog: false,
   showCommandPalette: false,
+  showShortcutsOverlay: false,
   filters: { ...defaultFilters },
   refreshKey: 0,
   sidebarOpen: false,
@@ -57,6 +60,7 @@ export const useClaimsStore = create<ClaimsState>((set) => ({
   setSelectedEmailId: (id) => set({ selectedEmailId: id }),
   setShowNewClaimDialog: (show) => set({ showNewClaimDialog: show }),
   setShowCommandPalette: (show) => set({ showCommandPalette: show }),
+  setShowShortcutsOverlay: (show) => set({ showShortcutsOverlay: show }),
   setFilter: (key, value) =>
     set((state) => ({ filters: { ...state.filters, [key]: value } })),
   clearFilters: () => set({ filters: { ...defaultFilters } }),

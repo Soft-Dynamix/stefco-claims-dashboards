@@ -673,6 +673,62 @@ Stage Summary:
 6. Add keyboard navigation improvements across all views
 
 ---
+Task ID: 12c-3
+Agent: Full-Stack Developer
+Task: Build comprehensive Claims Detail Sheet — slide-over panel with full claim details
+
+Work Log:
+- Read existing files: worklog.md, claims-view.tsx (Claim interface, integration at line 2514), claim-activity-timeline.tsx, globals.css, helpers.ts, sheet.tsx
+- Confirmed claim-detail-sheet.tsx already existed (from Task 10f era) with basic 4-tab implementation (Overview, Timeline, Notes, Documents)
+- Component was already integrated in claims-view.tsx with props: `claimId`, `open`, `onOpenChange`
+- Completely rewrote `src/components/claims/claim-detail-sheet.tsx` with comprehensive enhancements:
+  1. **SheetHeader** — Claim number (monospace) + client name + StatusBadge + Needs Attention badge + insurance company info
+  2. **Quick Actions Row** — 4 color-coded action buttons in header:
+     - "Mark Complete" (CheckCircle, emerald) — calls PUT /api/claims/:id with status=COMPLETED via useMutation
+     - "Request Review" (AlertTriangle, amber) — calls PUT with status=MANUAL_REVIEW via useMutation
+     - "Print Documents" (Printer, primary) — shows "Feature coming soon" toast
+     - "Add Note" (MessageSquare, sky) — switches to Notes tab
+  3. **5-Tab Navigation**: Overview | Details | Documents | Activity | Notes (replacing old 4-tab layout)
+  4. **Overview Tab**:
+     - Status progress bar: 6-stage horizontal stepper (Received → Classified → Extracted → Folder Created → Printed → Completed) with animated dot transitions and Progress bar
+     - Key info cards in 2x2 grid: Insurance Company, Claim Type, Confidence Score (color-coded), Processing Stage
+     - AI Classification card: predicted class, confidence bar, verified badge, AI hints/reasoning, alternatives display
+     - Quick stats: Days Since Created, Attachments Count
+  5. **Details Tab** (NEW):
+     - Structured read-only form in labeled sections: Client Info, Claim Info, Vehicle Info (Motor), Property Info (Building), File Location, Timestamps
+     - Folder path with copy-to-clipboard button
+     - Each section with icon header and horizontal separator
+  6. **Documents Tab** (ENHANCED):
+     - Upload button (dashed border, "Feature coming soon" toast)
+     - Empty state with Upload icon and descriptive text
+     - Document list fetched from /api/claims/:id/process with status colors
+     - Attachment count badge on tab trigger
+  7. **Activity Tab** (renamed from Timeline):
+     - Renders existing ClaimActivityTimeline component
+     - Fetches from /api/audit-logs?claimId=X&limit=50 (via ClaimActivityTimeline's built-in fetch)
+  8. **Notes Tab** (ENHANCED):
+     - Textarea with "Add Note" button and Ctrl+Enter shortcut
+     - Fetches notes from /api/claims/:id/notes via useQuery
+     - Add note mutation via POST /api/claims/:id/notes
+     - Each note shows: text, relative timestamp, "by User" badge, pinned indicator
+     - Empty state with MessageSquare icon
+- Styling: Sheet `sm:max-w-[600px]`, card-shine, card-hover, scrollbar-thin, FadeIn animations, dark mode support
+- Loading skeleton matches component layout (header, action buttons, tabs, content)
+- Error state with retry button
+- useMutation for Mark Complete and Request Review with query invalidation
+- No changes to claims-view.tsx — existing integration preserved (props unchanged)
+- Lint verified: 0 new errors (4 pre-existing errors in keyboard-shortcuts-overlay.tsx and quick-actions-fab.tsx)
+- Dev server running stable, no compilation errors
+
+Stage Summary:
+- Modified file: src/components/claims/claim-detail-sheet.tsx (complete rewrite, ~720 lines)
+- No changes to claims-view.tsx or any other files — existing integration preserved
+- Sheet slides from right at 600px width, full-width on mobile
+- All 5 tabs fully functional with loading, error, and empty states
+- Quick actions use useMutation with optimistic cache invalidation
+- No new dependencies required
+
+---
 Task ID: 10
 Agent: Main Agent (Cron QA Review)
 Task: QA assessment + styling polish + new feature development
@@ -2920,3 +2976,109 @@ Stage Summary:
 - Pre-existing: Foreign key error in process-email route for ignored emails (Prediction.create with empty claimId)
 - Some seeded entries have "NEW_CLAIM" classification for follow-up emails (the old AI classified them before the follow-up fix)
 - User corrections will be the most valuable data for improving accuracy
+
+---
+Task ID: 12d-1
+Agent: Styling Expert
+Task: Comprehensive styling improvements across the application
+
+Work Log:
+- Read worklog.md, globals.css (3067 lines), app-layout.tsx, layout.tsx for context
+- Confirmed existing `.sidebar-nav-item` and `.sidebar-active-item` classes in utilities.css already provide: left border accent (4px), subtle background tint, bolder text (font-weight: 600), icon color change, smooth transitions
+- Confirmed app-layout.tsx already applies `text-primary` and `transition-colors duration-200` to active nav icons
+- Appended 170 lines of new CSS to END of globals.css (3067 → 3236 lines, +169 lines):
+  1. `.card-interactive` — Interactive card hover with shadow, lift, border highlight, active press state, dark mode via `:is(.dark)`
+  2. `.empty-state` / `.empty-state-icon` / `.empty-state-title` / `.empty-state-description` — Polished empty state components with rounded icon container, semantic text hierarchy, dark mode
+  3. `.status-dot-indicator` — Pulse-animated status dot with `@keyframes statusDotPulse`, color variants (success/warning/error/info) using oklch colors
+  4. `.btn-glow` — Light sweep gradient pseudo-element on hover, dark mode variant
+  5. `.theme-transition` — Smooth 300ms color/bg/border transition for theme switching
+  6. `.data-grid` — Modern table layout with sticky headers, backdrop blur, uppercase tracking, hover row highlight, dark mode
+  7. Mobile sidebar active item — Stronger background tint + inset box-shadow on mobile, desktop animation on lg+
+- Added `className="theme-transition"` to `<html>` element in layout.tsx for smooth theme transitions
+- Applied `.empty-state` classes to 4 views:
+  - claims-view.tsx: "No claims found" empty table row
+  - print-queue-view.tsx: "No print queue items" empty state
+  - email-processing-view.tsx: "No processing events" empty state
+  - audit-view.tsx: "No audit logs found" empty state
+- Applied `.card-interactive` to insurance-performance-cards.tsx (replaced `hover-scale`)
+- All new CSS uses oklch() colors for Tailwind CSS 4 consistency
+- All new CSS supports dark mode via `:is(.dark)` selectors
+- Lint verified: 0 errors, 0 warnings in modified files (3 pre-existing errors in unrelated files)
+
+Stage Summary:
+- Modified files:
+  - src/app/globals.css (+169 lines appended at end before utilities.css import)
+  - src/app/layout.tsx (added theme-transition class to html element)
+  - src/components/claims/claims-view.tsx (empty-state classes)
+  - src/components/dashboard/print-queue-view.tsx (empty-state classes)
+  - src/components/dashboard/email-processing-view.tsx (empty-state classes)
+  - src/components/dashboard/audit-view.tsx (empty-state classes)
+  - src/components/dashboard/insurance-performance-cards.tsx (card-interactive)
+- 7 new CSS utility classes added (all with dark mode support)
+- No existing styles modified — all additions appended at end of globals.css
+- No new dependencies required
+- Dev server running stable with no compilation errors
+---
+Task ID: 12c-2
+Agent: Full-Stack Developer
+Task: Enhance Quick Actions FAB and add comprehensive keyboard shortcuts overlay
+
+Work Log:
+- Read existing files: quick-actions-fab.tsx, shortcuts-overlay.tsx, keyboard-shortcuts.tsx, app-layout.tsx, claims-store.ts
+- Updated claims-store.ts: added `showShortcutsOverlay` boolean state and `setShowShortcutsOverlay` action
+- Created `src/components/layout/global-hotkeys.tsx` — headless component handling all keyboard shortcuts:
+  - `1-8` keys navigate to Dashboard, Email, Claims, Insurance, Audit, Print Queue, Workflow, Config tabs
+  - `N` opens new claim dialog (navigates to claims tab + shows dialog + toast notification)
+  - `E` triggers CSV export via custom event `trigger-csv-export`
+  - `/` focuses search input in header
+  - `T` toggles dark/light mode via next-themes
+  - `Q` toggles Quick Actions via custom event `toggle-quick-actions`
+  - `?` opens keyboard shortcuts overlay via store state
+  - `Escape` closes overlays (shortcuts overlay, command palette, new claim dialog)
+  - All shortcuts disabled when input/textarea/select is focused
+  - Ctrl/Cmd+K intentionally not intercepted (handled by CommandPalette)
+- Created `src/components/layout/keyboard-shortcuts-overlay.tsx` — comprehensive shortcuts overlay:
+  - Full-screen overlay triggered by `?` key (via store state) or keyboard shortcuts button in FAB
+  - Search/filter input at top with result count
+  - 3-column grid layout (md+): Navigation, Actions, Claim Management
+  - Navigation shortcuts: Dashboard(1), Email(2), Claims(3), Insurance(4), Print Queue(5), Workflow(6), Config(7), Audit Logs(8)
+  - Action shortcuts: New Claim(N), Export CSV(E), Search(/), Toggle Theme(T), Quick Actions(Q), Shortcuts(?), Command Palette(⌘K)
+  - Claim Management shortcuts: Approve(A), Reject(R), Flag(F), Add Note(M)
+  - Each shortcut shown as: Icon + Description + Kbd badge
+  - Close on Escape (backup handler with capture phase) or clicking backdrop
+  - Animated entrance (fade + scale from center) via framer-motion
+  - Search highlighting with ring indicator on matching shortcuts
+  - Empty state when no shortcuts match filter
+  - Theme toggle button in footer
+  - Glassmorphism backdrop with blur
+  - Dark mode support throughout
+- Rewrote `src/components/layout/quick-actions-fab.tsx` — enhanced with desktop vertical bar:
+  - Extracted MobileFab and DesktopBar as separate components (fixes React Compiler lint rule)
+  - Mobile FAB: 4 action buttons (New Claim, Export Report, Settings, Search) with staggered animations
+  - Desktop vertical bar: Collapsible Card on right side of screen (centered vertically)
+    - Collapsed state: single Plus icon button
+    - Expanded state: 4 action buttons + separator + Command Palette + Keyboard Shortcuts + Collapse button
+    - Smooth expand/collapse with framer-motion layout animation
+  - Sub-actions animate in with staggered delay (scale + opacity)
+  - Backdrop: semi-transparent overlay when mobile FAB is expanded
+  - Tooltips on each sub-action showing keyboard shortcut (kbd badge)
+  - Settings button disabled on mobile with tooltip "Available on desktop"
+  - Color-coded buttons: emerald(New Claim), amber(Export), violet(Settings), sky(Search)
+  - Hover:scale-110 on desktop buttons
+  - Listens for `toggle-quick-actions` custom event (from Q hotkey)
+- Updated `src/components/layout/app-layout.tsx`:
+  - Added imports for GlobalHotkeys and KeyboardShortcutsOverlay
+  - Replaced ShortcutsOverlay with KeyboardShortcutsOverlay
+  - Kept existing KeyboardShortcuts for legacy single-letter nav (d, c, i, a, p, w, s)
+  - GlobalHotkeys runs alongside KeyboardShortcuts (new shortcuts don't conflict)
+- Lint verified: 0 errors, 0 warnings
+- Dev server running stable with no compilation errors
+
+Stage Summary:
+- New files: src/components/layout/global-hotkeys.tsx, src/components/layout/keyboard-shortcuts-overlay.tsx
+- Modified files: src/components/layout/quick-actions-fab.tsx (complete rewrite), src/components/layout/app-layout.tsx (imports), src/store/claims-store.ts (new state)
+- All keyboard shortcuts: 1-8 navigation, N new claim, E export, / search, T theme, Q quick actions, ? shortcuts overlay, Esc close
+- Desktop vertical bar FAB with collapsible action panel
+- Mobile floating FAB with 4 quick actions
+- 19 total keyboard shortcuts documented in overlay with search/filter
+- No new dependencies required

@@ -474,16 +474,14 @@ export function PrintQueueView() {
               </Table>
             </ScrollArea>
           ) : (
-            <div className="flex flex-col items-center justify-center py-16 gap-3">
-              <div className="flex items-center justify-center size-14 rounded-full bg-muted/50">
-                <Printer className="size-7 text-muted-foreground/40" />
+            <div className="empty-state">
+              <div className="empty-state-icon">
+                <Printer className="size-7" />
               </div>
-              <div className="text-center">
-                <p className="text-sm font-medium text-foreground">No print queue items found</p>
-                <p className="text-xs text-muted-foreground mt-1">
-                  {searchText ? 'No items match your current search. Try a different term.' : statusFilter !== 'ALL' ? `No ${printStatusLabels[statusFilter]?.toLowerCase() || ''} items in the queue.` : 'New print jobs will appear here when claims are processed.'}
-                </p>
-              </div>
+              <p className="empty-state-title">No print queue items</p>
+              <p className="empty-state-description">
+                {searchText ? 'No items match your current search. Try a different term.' : statusFilter !== 'ALL' ? `No ${printStatusLabels[statusFilter]?.toLowerCase() || ''} items in the queue.` : 'New print jobs will appear here when claims are processed.'}
+              </p>
               {(searchText || statusFilter !== 'ALL') && (
                 <Button variant="outline" size="sm" className="mt-1 btn-press" onClick={() => { setSearchText(''); setStatusFilter('ALL') }}>
                   Clear Filters

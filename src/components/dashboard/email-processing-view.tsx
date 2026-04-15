@@ -2064,10 +2064,12 @@ export function EmailProcessingView() {
                       <Loader2 className="size-6 animate-spin text-muted-foreground" />
                     </div>
                   ) : !auditLogsQuery.data?.auditLogs?.length ? (
-                    <div className="flex flex-col items-center justify-center py-12 text-center">
-                      <Inbox className="size-10 text-muted-foreground/30 mb-3" />
-                      <p className="text-sm font-medium text-muted-foreground">No processing events yet</p>
-                      <p className="text-xs text-muted-foreground/70 mt-1">
+                    <div className="empty-state">
+                      <div className="empty-state-icon">
+                        <Inbox className="size-7" />
+                      </div>
+                      <p className="empty-state-title">No processing events</p>
+                      <p className="empty-state-description">
                         Events will appear here when emails are processed through the pipeline.
                       </p>
                     </div>

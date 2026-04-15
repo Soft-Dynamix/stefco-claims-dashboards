@@ -183,7 +183,7 @@ export function InsurancePerformanceCards() {
           return (
             <Card
               key={company.id}
-              className={`overflow-hidden card-enter hover-scale transition-all duration-200 ${
+              className={`overflow-hidden card-enter card-interactive transition-all duration-200 ${
                 !company.isActive ? 'opacity-60' : ''
               }`}
             >
