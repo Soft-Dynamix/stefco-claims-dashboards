@@ -45,6 +45,11 @@ import {
   Check,
   Globe,
   Server,
+  Phone,
+  DollarSign,
+  MessageSquare,
+  Car,
+  Calendar,
 } from 'lucide-react'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
@@ -69,7 +74,7 @@ interface SampleEmail {
   body: string
   attachments: string[]
   receivedAt: string
-  classification: 'NEW_CLAIM' | 'IGNORE' | null
+  classification: 'NEW_CLAIM' | 'IGNORE' | 'MISSING_INFO' | 'OTHER' | null
   confidence: number | null
   reasoning: string | null
   extractedData: {
@@ -77,13 +82,22 @@ interface SampleEmail {
     clientName?: string | null
     claimType?: string | null
     insuranceCompany?: string | null
+    contactNumber?: string | null
+    contactEmail?: string | null
+    incidentDescription?: string | null
+    excessAmount?: string | null
+    specialInstructions?: string | null
+    vehicleMake?: string | null
+    vehicleModel?: string | null
+    vehicleYear?: string | null
+    vehicleRegistration?: string | null
   } | null
   suggestedPath: string | null
   processed: boolean
 }
 
 interface ClassifyResult {
-  classification: 'NEW_CLAIM' | 'IGNORE'
+  classification: 'NEW_CLAIM' | 'IGNORE' | 'MISSING_INFO' | 'OTHER'
   confidence: number
   reasoning: string
   extractedData: {
@@ -91,6 +105,15 @@ interface ClassifyResult {
     clientName?: string | null
     claimType?: string | null
     insuranceCompany?: string | null
+    contactNumber?: string | null
+    contactEmail?: string | null
+    incidentDescription?: string | null
+    excessAmount?: string | null
+    specialInstructions?: string | null
+    vehicleMake?: string | null
+    vehicleModel?: string | null
+    vehicleYear?: string | null
+    vehicleRegistration?: string | null
   } | null
   suggestedPath: string | null
 }
@@ -258,6 +281,22 @@ function ClassificationBadge({ classification }: { classification: string | null
       </Badge>
     )
   }
+  if (classification === 'MISSING_INFO') {
+    return (
+      <Badge className="text-xs font-medium bg-amber-100 text-amber-800 border border-amber-200 dark:bg-amber-950/50 dark:text-amber-400 dark:border-amber-800">
+        <AlertCircle className="size-3 mr-1" />
+        Follow-up / Query
+      </Badge>
+    )
+  }
+  if (classification === 'OTHER') {
+    return (
+      <Badge className="text-xs font-medium bg-violet-100 text-violet-800 border border-violet-200 dark:bg-violet-950/50 dark:text-violet-400 dark:border-violet-800">
+        <FileText className="size-3 mr-1" />
+        Other
+      </Badge>
+    )
+  }
   return (
     <Badge className="text-xs font-medium bg-slate-100 text-slate-600 border border-slate-200 dark:bg-slate-800/50 dark:text-slate-400 dark:border-slate-700">
       <Ban className="size-3 mr-1" />
@@ -414,7 +453,7 @@ function EmailDetailPanel({
   onClose: () => void
 }) {
   return (
-    <div className="h-full flex flex-col">
+    <div className="flex flex-col">
       {/* Header */}
       <div className="flex items-center justify-between px-4 py-3 border-b">
         <div className="flex items-center gap-2">
@@ -545,43 +584,34 @@ function EmailDetailPanel({
                       <span className="text-[11px] text-muted-foreground mb-2 block">
                         Extracted Claim Data
                       </span>
-                      <div className="grid grid-cols-2 gap-3">
-                        {email.extractedData.claimNumber && (
-                          <div className="flex items-start gap-2 p-2 rounded-md bg-background/60">
-                            <FileText className="size-3.5 text-muted-foreground mt-0.5" />
-                            <div>
-                              <span className="text-[11px] text-muted-foreground">Claim Number</span>
-                              <p className="text-sm font-medium text-foreground">{email.extractedData.claimNumber}</p>
+                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                        {Object.entries({
+                          claimNumber: { icon: FileText, label: 'Claim Number' },
+                          clientName: { icon: User, label: 'Client Name' },
+                          claimType: { icon: Zap, label: 'Claim Type' },
+                          insuranceCompany: { icon: Building2, label: 'Insurance Co.' },
+                          contactNumber: { icon: Phone, label: 'Contact Number' },
+                          contactEmail: { icon: Mail, label: 'Contact Email' },
+                          incidentDescription: { icon: AlertTriangle, label: 'Incident Description' },
+                          excessAmount: { icon: DollarSign, label: 'Excess Amount' },
+                          specialInstructions: { icon: MessageSquare, label: 'Special Instructions' },
+                          vehicleMake: { icon: Car, label: 'Vehicle Make' },
+                          vehicleModel: { icon: Car, label: 'Vehicle Model' },
+                          vehicleYear: { icon: Calendar, label: 'Vehicle Year' },
+                          vehicleRegistration: { icon: FileText, label: 'Registration' },
+                        }).map(([key, { icon: Icon, label }]) => {
+                          const value = (email.extractedData as Record<string, string | null | undefined>)[key]
+                          if (!value) return null
+                          return (
+                            <div key={key} className="flex items-start gap-2 p-2 rounded-md bg-background/60">
+                              <Icon className="size-3.5 text-muted-foreground mt-0.5 shrink-0" />
+                              <div className="min-w-0">
+                                <span className="text-[11px] text-muted-foreground">{label}</span>
+                                <p className="text-sm font-medium text-foreground break-words">{value}</p>
+                              </div>
                             </div>
-                          </div>
-                        )}
-                        {email.extractedData.clientName && (
-                          <div className="flex items-start gap-2 p-2 rounded-md bg-background/60">
-                            <User className="size-3.5 text-muted-foreground mt-0.5" />
-                            <div>
-                              <span className="text-[11px] text-muted-foreground">Client Name</span>
-                              <p className="text-sm font-medium text-foreground">{email.extractedData.clientName}</p>
-                            </div>
-                          </div>
-                        )}
-                        {email.extractedData.claimType && (
-                          <div className="flex items-start gap-2 p-2 rounded-md bg-background/60">
-                            <Zap className="size-3.5 text-muted-foreground mt-0.5" />
-                            <div>
-                              <span className="text-[11px] text-muted-foreground">Claim Type</span>
-                              <p className="text-sm font-medium text-foreground">{email.extractedData.claimType}</p>
-                            </div>
-                          </div>
-                        )}
-                        {email.extractedData.insuranceCompany && (
-                          <div className="flex items-start gap-2 p-2 rounded-md bg-background/60">
-                            <Building2 className="size-3.5 text-muted-foreground mt-0.5" />
-                            <div>
-                              <span className="text-[11px] text-muted-foreground">Insurance Co.</span>
-                              <p className="text-sm font-medium text-foreground">{email.extractedData.insuranceCompany}</p>
-                            </div>
-                          </div>
-                        )}
+                          )
+                        })}
                       </div>
                     </div>
                   </>
@@ -605,7 +635,7 @@ function EmailDetailPanel({
 
                 {/* Action Buttons */}
                 <Separator />
-                <div className="flex items-center gap-2 pt-1">
+                <div className="flex items-center gap-2 pt-1 flex-wrap">
                   {email.classification === 'NEW_CLAIM' && !email.processed && (
                     <Button
                       size="sm"
@@ -620,6 +650,12 @@ function EmailDetailPanel({
                       )}
                       {isProcessing ? 'Processing...' : 'Process Claim'}
                     </Button>
+                  )}
+                  {email.classification === 'MISSING_INFO' && !email.processed && (
+                    <Badge className="bg-amber-100 text-amber-800 border border-amber-200 dark:bg-amber-950/50 dark:text-amber-400 dark:border-amber-800">
+                      <AlertCircle className="size-3 mr-1" />
+                      Follow-up / Query — No claim created
+                    </Badge>
                   )}
                   {!email.processed && (
                     <Button
@@ -1176,6 +1212,10 @@ export function EmailProcessingView() {
           toast.success(
             result.classification === 'NEW_CLAIM'
               ? 'Email classified as New Claim'
+              : result.classification === 'MISSING_INFO'
+              ? 'Email classified as Follow-up / Query'
+              : result.classification === 'OTHER'
+              ? 'Email classified as Other'
               : 'Email classified as Ignore'
           )
           setClassifyingId(null)
@@ -1700,7 +1740,7 @@ export function EmailProcessingView() {
             </div>
           </CardHeader>
           <CardContent className="p-3">
-            <ScrollArea className="max-h-[320px]">
+            <ScrollArea className="max-h-[500px]">
               <div className="space-y-1">
                 {emails.map((email) => (
                   <EmailRow
@@ -1724,7 +1764,7 @@ export function EmailProcessingView() {
         <FadeIn delay={0.15}>
           <Card className="overflow-hidden card-enter stagger-2">
             <CardContent className="p-0">
-              <div className="grid grid-cols-1 xl:grid-cols-2 divide-y xl:divide-y-0 xl:divide-x divide-border">
+              <div className="grid grid-cols-1 xl:grid-cols-2 divide-y xl:divide-y-0 xl:divide-x divide-border min-h-[600px]">
                 {/* Left: Raw email - shown in a larger scrollable area */}
                 <div className="min-h-0">
                   <div className="px-4 py-3 border-b bg-muted/20">
@@ -1733,7 +1773,7 @@ export function EmailProcessingView() {
                       Email Preview
                     </h4>
                   </div>
-                  <ScrollArea className="max-h-[700px]">
+                  <ScrollArea className="max-h-[900px]">
                     <div className="p-4 space-y-4">
                       <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                         <div>
@@ -1741,9 +1781,13 @@ export function EmailProcessingView() {
                           <p className="text-sm font-medium text-foreground">{selectedEmail.from}</p>
                         </div>
                         <div>
-                          <span className="text-[11px] text-muted-foreground">Received</span>
-                          <p className="text-sm text-foreground">{formatDate(selectedEmail.receivedAt)}</p>
+                          <span className="text-[11px] text-muted-foreground">To</span>
+                          <p className="text-sm font-medium text-foreground">claims@stefco-assess.co.za</p>
                         </div>
+                      </div>
+                      <div>
+                        <span className="text-[11px] text-muted-foreground">Received</span>
+                        <p className="text-sm text-foreground">{formatDate(selectedEmail.receivedAt)}</p>
                       </div>
                       <div>
                         <span className="text-[11px] text-muted-foreground">Subject</span>

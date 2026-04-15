@@ -6,36 +6,43 @@
 
 const CLASSIFICATION_SYSTEM_PROMPT = `You are an insurance claims email classifier for Stefco, a South African insurance claims management company. Your job is to analyze incoming emails and determine whether they represent a new insurance claim notification that should be processed.
 
-CLASSIFICATION CRITERIA:
+⚠️ CRITICAL: Not every email that mentions "claim" is a new claim. Follow-ups, status queries, document requests about EXISTING claims must be identified and classified correctly.
 
-Classify as "NEW_CLAIM" if the email contains ANY of these indicators:
+Classify as "NEW_CLAIM" ONLY if the email introduces a BRAND NEW claim that has NOT been previously processed. Clear indicators:
 - "New assessment" or "Nuwe assessering" (New assessment in Afrikaans)
-- "New appointment" or "Nuwe benoeming" 
+- "New appointment" or "Nuwe benoeming"
 - "NUWE EIS" (New Claim in Afrikaans)
-- Claim number references (e.g., "Claim No:", "Claim Reference:")
-- Assessment appointment details
-- Insurance policy number references
-- Vehicle registration numbers with damage descriptions
-- Incident dates and descriptions
-- References to "assessor", "assessment", "claim"
-- Attached documents typically found with claims (assessment reports, photos, quotes)
-- Sender is a known insurance company domain
+- "Appointment of" an assessor/loss adjuster for a NEW matter
+- FIRST notification of a loss/damage incident
+- A new claim number being ASSIGNED (not just referenced from an existing claim)
+- NEW vehicle damage descriptions with registration numbers
+- Sender is a known insurance company sending a NEW notification
+- Attached documents typical of new claims (assessment reports, photos, quotes)
+
+⚠️ The following do NOT make an email a "new claim":
+- Merely mentioning the word "claim" or "assessment"
+- Referencing an existing claim number in a follow-up context
+- Asking about the status of an existing claim
+- Forwarding documents for an existing claim
+- Requesting additional information for an existing claim
 
 Classify as "IGNORE" if the email is:
 - Marketing or promotional content
 - Newsletter or subscription updates
 - Out of office / auto-reply messages
-- General inquiries without claim-specific information
+- Follow-up or status queries about existing claims (these are NOT new claims)
+- General inquiries without a NEW claim being introduced
 - Spam or phishing attempts
 - Internal company communications not related to claims
 - Payment confirmations or receipts without claim context
 - Meeting invitations without claim context
+- Automated FTP or server notifications
 
 RESPOND WITH ONLY A JSON OBJECT (no markdown, no backticks):
 {
   "classification": "NEW_CLAIM" or "IGNORE",
   "confidence": <number 0-100>,
-  "reasoning": "<brief explanation>"
+  "reasoning": "<brief explanation — mention if follow-up signals were detected>"
 }`
 
 const EXTRACTION_SYSTEM_PROMPT = `You are an insurance claims data extraction specialist for Stefco, a South African insurance claims management company. Extract all relevant claim information from the email content.
@@ -467,31 +474,92 @@ export async function callAI(systemPrompt: string, userMessage: string, model?: 
 
 /**
  * Classify an email as NEW_CLAIM or IGNORE using AI.
+ * Now uses preprocessing to detect follow-up signals for smarter classification.
  */
 export async function classifyEmail(subject: string, body: string, from: string): Promise<{
   classification: 'NEW_CLAIM' | 'IGNORE'
   confidence: number
   reasoning: string
 }> {
+  // Use preprocessing to detect follow-up signals
+  const { preprocessEmail } = await import('@/lib/agents/preprocess-agent')
+  const preprocessed = preprocessEmail({ subject, body, from })
+  const fu = preprocessed.followUpSignals
+  const fuCount = [fu.isReply, fu.isForward, fu.hasFollowUpPhrases, fu.hasStatusQuery, fu.hasExistingClaimRef].filter(Boolean).length
+
+  // Build follow-up context for the AI prompt
+  const followUpContext = fuCount > 0
+    ? `\n\n⚠️ FOLLOW-UP SIGNALS DETECTED (${fuCount}/5): ${fu.phrases.slice(0, 5).join(', ')}. This email appears to be a follow-up or query about an EXISTING claim, NOT a new claim.`
+    : ''
+
   const text = await callAI(
     CLASSIFICATION_SYSTEM_PROMPT,
-    `Analyze this email:\n\nFrom: ${from}\n\nSubject: ${subject}\n\nBody:\n${body.slice(0, 4000)}`
+    `Analyze this email:${followUpContext}\n\nFrom: ${from}\n\nSubject: ${subject}\n\nBody:\n${body.slice(0, 4000)}`
   )
 
   if (!text) {
-    // Fallback: heuristic classification
+    // Fallback: heuristic classification using follow-up signals
     const lowerText = `${subject} ${body} ${from}`.toLowerCase()
-    const claimKeywords = [
+
+    // Strong new claim indicators only
+    const strongClaimKeywords = [
       'new assessment', 'nuwe assessering', 'new appointment', 'nuwe benoeming',
-      'nuwe eis', 'claim no', 'claim reference', 'claim ref',
-      'assessment', 'assessor', 'claim number', 'policy number',
+      'nuwe eis', 'appointment of', 'aanstelling van',
+      'new claim notification', 'new loss', 'new matter',
     ]
-    const hasClaimKeywords = claimKeywords.some((kw) => lowerText.includes(kw))
+    const hasStrongClaim = strongClaimKeywords.some((kw) => lowerText.includes(kw))
+
+    // Weak claim indicators (also appear in follow-ups)
+    const weakClaimKeywords = [
+      'assessment', 'assessor', 'claim number', 'policy number',
+      'claim no', 'claim reference', 'claim ref',
+    ]
+    const hasWeakClaim = weakClaimKeywords.some((kw) => lowerText.includes(kw))
+
+    // Follow-up indicators
+    const followUpKeywords = [
+      'follow', 'follow-up', 'followup', 'status update', 'status check',
+      'any news', 'any update', 'please advise', 'kindly advise',
+      'resubmit', 'reminder', 'query', 'enquiry',
+      'what is the status', 'has the assessment',
+      'we are still waiting', 'client is waiting',
+      'escalat', 'urgent', 'overdue',
+      'in response to', 'as discussed',
+      'further to', 'in respect of', 'regarding claim',
+    ]
+    const hasFollowUp = followUpKeywords.some((kw) => lowerText.includes(kw))
+
+    // Determine classification
+    const isStrongFollowUp = fuCount >= 2 || (fuCount >= 1 && hasFollowUp)
+
+    if (isStrongFollowUp && !hasStrongClaim) {
+      return {
+        classification: 'IGNORE',
+        confidence: 80,
+        reasoning: `Fallback: Follow-up/query detected (${fuCount} structural signals + keyword matches). Not a new claim.`,
+      }
+    }
+
+    if (hasStrongClaim && !isStrongFollowUp) {
+      return {
+        classification: 'NEW_CLAIM',
+        confidence: 70,
+        reasoning: 'Fallback: Strong new claim indicators found with no follow-up signals.',
+      }
+    }
+
+    if (hasWeakClaim && !hasFollowUp && fuCount === 0) {
+      return {
+        classification: 'NEW_CLAIM',
+        confidence: 55,
+        reasoning: 'Fallback: Weak claim indicators found but no follow-up signals. Low confidence.',
+      }
+    }
 
     return {
-      classification: hasClaimKeywords ? 'NEW_CLAIM' : 'IGNORE',
-      confidence: hasClaimKeywords ? 60 : 80,
-      reasoning: 'Fallback classification due to AI API unavailable. Keyword matching used.',
+      classification: 'IGNORE',
+      confidence: 75,
+      reasoning: 'Fallback classification due to AI API unavailable. Insufficient new claim indicators or follow-up signals present.',
     }
   }
 
@@ -507,17 +575,13 @@ export async function classifyEmail(subject: string, body: string, from: string)
   } catch {
     // Fallback if JSON parse fails
     const lowerText = `${subject} ${body} ${from}`.toLowerCase()
-    const claimKeywords = [
-      'new assessment', 'nuwe assessering', 'new appointment', 'nuwe benoeming',
-      'nuwe eis', 'claim no', 'claim reference', 'claim ref',
-      'assessment', 'assessor', 'claim number', 'policy number',
-    ]
-    const hasClaimKeywords = claimKeywords.some((kw) => lowerText.includes(kw))
+    const isStrongFollowUp = fuCount >= 2
+    const hasStrongClaim = lowerText.includes('new assessment') || lowerText.includes('nuwe assessering') || lowerText.includes('nuwe eis')
 
     return {
-      classification: hasClaimKeywords ? 'NEW_CLAIM' : 'IGNORE',
-      confidence: hasClaimKeywords ? 60 : 80,
-      reasoning: 'Fallback classification due to AI response parsing failure. Keyword matching used.',
+      classification: (hasStrongClaim && !isStrongFollowUp) ? 'NEW_CLAIM' : 'IGNORE',
+      confidence: isStrongFollowUp ? 80 : 55,
+      reasoning: `Fallback: JSON parse failed. ${isStrongFollowUp ? 'Follow-up signals detected.' : ''} ${hasStrongClaim ? 'Claim keywords found.' : ''}`,
     }
   }
 }

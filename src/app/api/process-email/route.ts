@@ -111,7 +111,9 @@ export async function POST(request: NextRequest) {
       body: intake.body,
       from: intake.senderEmail,
     })
-    console.error(`[pipeline] Agent 2 (Preprocess): claim#=${preprocessed.possibleClaimNumber || 'none'}, names=[${preprocessed.personNames.length}], keywords=[${preprocessed.keywords.length}]`)
+    const fuSignals = preprocessed.followUpSignals
+    const fuCount = fuSignals ? [fuSignals.isReply, fuSignals.isForward, fuSignals.hasFollowUpPhrases, fuSignals.hasStatusQuery, fuSignals.hasExistingClaimRef].filter(Boolean).length : 0
+    console.error(`[pipeline] Agent 2 (Preprocess): claim#=${preprocessed.possibleClaimNumber || 'none'}, names=[${preprocessed.personNames.length}], keywords=[${preprocessed.keywords.length}], followUpSignals=${fuCount}/5${fuCount >= 2 ? ' (STRONG)' : ''}`)
 
     // ==========================================
     // LEARNING: Fetch past correction patterns
@@ -159,6 +161,7 @@ export async function POST(request: NextRequest) {
         personNames: preprocessed.personNames,
         dates: preprocessed.dates,
         keywords: preprocessed.keywords,
+        followUpSignals: preprocessed.followUpSignals,
       },
       learningHints: learningHintsStr || undefined,
     })
