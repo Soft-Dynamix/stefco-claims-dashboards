@@ -2669,3 +2669,25 @@ Stage Summary:
 ## Priority Recommendations for Next Phase:
 - Consider adding a banner/alert on the Settings page when no valid API key is configured
 - Add an onboarding toast notification pointing users to the AI key setup when they first open the app
+
+---
+Task ID: 11
+Agent: Main Agent
+Task: Fix email classification to distinguish new claims from follow-ups/queries + make email review screen bigger
+
+Work Log:
+- Analyzed full classification pipeline: preprocess-agent → classification-agent → decision-engine
+- Found that followUpSignals were detected by preprocess-agent but NEVER passed to classification-agent or AI prompts
+- Updated classification-agent.ts: Added followUpSignals to preprocessed params, built signal strength summary for AI prompt, rewrote heuristic classifier with 3-way scoring (claimScore, followUpScore, missingInfoScore) and penalty system
+- Updated process-email/route.ts: Passed followUpSignals through to classifyWithAgent(), added follow-up signal count to pipeline logs
+- Updated ai-helpers.ts: Rewrote CLASSIFICATION_SYSTEM_PROMPT with explicit warnings about follow-ups vs new claims, updated classifyEmail() to use preprocessing for follow-up detection, added follow-up context to AI user prompt, rewrote fallback heuristics with strong/weak claim keyword separation
+- Updated email-processing-view.tsx: Increased email inbox scroll area (320→500px), increased detail panel (700→900px), added min-h-[600px] to detail card, added 'To' field to email preview, updated toast messages for all classification types
+- All lint checks pass, dev server running stable, pushed to GitHub (31437ec)
+
+Stage Summary:
+- Files modified: classification-agent.ts, process-email/route.ts, ai-helpers.ts, email-processing-view.tsx
+- Key fix: followUpSignals from preprocessor now flow through entire classification pipeline
+- AI prompts now explicitly warn that "claim" keyword alone doesn't make a new claim
+- Heuristic fallback has 3-way scoring with strong penalty (claimScore * 0.3) when followUpScore >= 6
+- 4 classification types supported: NEW_CLAIM, MISSING_INFO, OTHER, IGNORE
+- Email review screen significantly bigger with all 13 extracted data fields visible
