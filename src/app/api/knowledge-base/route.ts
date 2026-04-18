@@ -309,7 +309,7 @@ async function getStats() {
     ? Math.round(((total - correctedCount) / total) * 1000) / 10
     : 100
 
-  // Get recent entries for the recent list
+  // Get recent entries for the recent list (include senderDomain for the widget)
   const recentEntries = await db.classificationKnowledge.findMany({
     orderBy: { createdAt: 'desc' },
     take: 5,
@@ -321,22 +321,37 @@ async function getStats() {
       confidence: true,
       source: true,
       isCorrected: true,
+      senderDomain: true,
       createdAt: true,
     },
   })
 
+  // Transform classification distribution to array format expected by KBStatsWidget
+  const classificationDistribution = Object.entries(byClassification).map(
+    ([classification, count]) => ({ classification, count }),
+  )
+
   return NextResponse.json({
-    total,
+    totalExamples: total,
     active: totalActive,
-    byClassification,
-    bySource,
-    bySenderDomain,
-    topSenderDomains,
-    correctedCount,
+    senderDomains: Object.keys(bySenderDomain).length,
+    correctionsMade: correctedCount,
     accuracyRate,
     avgConfidence: avgConfidenceResult._avg.confidence
       ? Math.round(avgConfidenceResult._avg.confidence * 10) / 10
       : 0,
-    recentEntries,
+    classificationDistribution,
+    bySource,
+    bySenderDomain,
+    topSenderDomains,
+    recentEntries: recentEntries.map((entry) => ({
+      id: entry.id,
+      subject: entry.subject,
+      classification: entry.originalClassification,
+      senderDomain: entry.senderDomain,
+      source: entry.source,
+      isCorrected: entry.isCorrected,
+      createdAt: entry.createdAt.toISOString(),
+    })),
   })
 }

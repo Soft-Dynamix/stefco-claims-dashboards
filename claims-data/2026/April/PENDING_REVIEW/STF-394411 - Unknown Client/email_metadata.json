@@ -1,0 +1,48 @@
+{
+  "claimId": "cmo3xpcc00006juhgjkhpn5eq",
+  "claimNumber": "STF-394411",
+  "clientName": "Unknown Client",
+  "senderEmail": "wordpress@stefco-assess.co.za",
+  "emailSubject": "[Wordfence Alert] Problems found on stefco-assess.co.za",
+  "emailBody": "This email was sent from your website \"Stefco Consultants Assessors & Loss Adjusters  - (North West, Gauteng, Mpumalanga, Limpopo and the Free State, South Africa)\" by the Wordfence plugin.\r\n\r\n\nWordfence found the following new issues on \"Stefco Consultants Assessors & Loss Adjusters  - (North West, Gauteng, Mpumalanga, Limpopo and the Free State, South Africa)\" (6 existing issues were also found again).\r\n\r\n\nAlert generated at Friday 17th of April 2026 at 09:45:54 PM\r\n\r\n\n\r\n\r\n\nSee the details of these scan results on your site at: https://stefco-assess.co.za/wp-admin/admin.php?page=WordfenceScan\r\n\r\n\r\n\r\n\r\n\nCritical Problems:\r\n\n* The Plugin \"Starter Templates\" needs an upgrade (4.4.2 -> 4.5.3).\r\n\nUpdate includes security-related fixes. \nVulnerability Severity: 8.8/10.0 (High) Vulnerability Information\nhttps://wordpress.org/plugins/astra-sites/#developers\r\n\r\n\r\n\n6 existing issues were found again and are not shown.\r\n\t\nNOTE: You are using the free version of Wordfence. Upgrade today:\r\n\t\r\n\t\r\n\t\tReceive real-time Firewall and Scan engine rule updates for protection as threats emerge\r\n\t\tReal-time IP Blocklist blocks the most malicious IPs from accessing your site\r\n\t\tCountry blocking\r\n\t\tIP reputation monitoring\r\n\t\tSchedule scans to run more frequently and at optimal times\r\n\t\tAccess to Premium Support\r\n\t\tDiscounts for multi-year and multi-license purchases\r\n\t\r\n\r\n\t\nClick here to upgrade to Wordfence Premium:\nhttps://www.wordfence.com/zz2/wordfence-signup/\r\n\r\n\nNo longer an administrator for this site? Click here to stop receiving security alerts.",
+  "claimType": "Motor",
+  "insuranceCompany": "PENDING_REVIEW",
+  "attachments": [],
+  "extraction": {
+    "claim_number": null,
+    "client_name": null,
+    "insurance_company": null,
+    "claim_type": null,
+    "contact_number": null,
+    "contact_email": null,
+    "incident_description": null,
+    "excess_amount": null,
+    "special_instructions": null,
+    "vehicle_make": null,
+    "vehicle_model": null,
+    "vehicle_year": null,
+    "vehicle_registration": null
+  },
+  "classification": {
+    "predictedClass": "MISSING_INFO",
+    "confidence": 0.8,
+    "alternatives": [
+      {
+        "class": "NEW_CLAIM",
+        "score": 0
+      },
+      {
+        "class": "IGNORE",
+        "score": 0.15
+      }
+    ],
+    "reasoning": "Fallback heuristic — AI unavailable. Strong follow-up signals detected (10 pts): follow, eta. Not a new claim."
+  },
+  "overallConfidence": 32,
+  "isDuplicate": false,
+  "_meta": {
+    "savedAt": "2026-04-18T06:06:34.420Z",
+    "localPath": "/home/z/my-project/claims-data/2026/April/PENDING_REVIEW/STF-394411 - Unknown Client",
+    "originalFolderPath": "Z:\\2026\\April\\PENDING_REVIEW\\STF-394411 - Unknown Client"
+  }
+}

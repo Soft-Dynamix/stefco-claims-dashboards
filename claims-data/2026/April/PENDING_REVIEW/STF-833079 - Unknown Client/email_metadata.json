@@ -1,0 +1,48 @@
+{
+  "claimId": "cmo3yk6ez00e6juhg8nurd51k",
+  "claimNumber": "STF-833079",
+  "clientName": "Unknown Client",
+  "senderEmail": "admin@stefco-assess.co.za",
+  "emailSubject": "Re: Re: Re: Re: Re: Re: Re: Re: Re: Re: Re: Re: Re: Re: Re: Re: Re: Re: Re: Re: Re: Re: Re: Re: [Wordfence Alert] Problems found on stefco-assess.co.za - Claim Received - Claim Received - Claim Received - Claim Received - Claim Received - Claim Received - Claim Received - Claim Received - Claim Received - Claim Received - Claim Received - Claim Received - Claim Received - Claim Received - Claim Received - Claim Received - Claim Received - Claim Received - Claim Received - Claim Received - Claim Received - Claim Received - Claim Received - Claim Received",
+  "emailBody": "Dear Unknown Client,\r\n\r\nThank you for your email. Your claim has been received and is being processed.\r\n\r\nClaim Reference: STF-773117\r\nClaim Type: Motor\r\n\r\nOur team will contact you shortly with an update. If you have any questions in the meantime, please reply to this email.\r\n\r\nKind regards,\r\nStefco Automation\r\nClaims Department\r\n\r\n---\r\nThis is an automated acknowledgment. Please do not delete this email as it contains your claim reference number.",
+  "claimType": "Motor",
+  "insuranceCompany": "PENDING_REVIEW",
+  "attachments": [],
+  "extraction": {
+    "claim_number": null,
+    "client_name": null,
+    "insurance_company": null,
+    "claim_type": null,
+    "contact_number": null,
+    "contact_email": null,
+    "incident_description": null,
+    "excess_amount": null,
+    "special_instructions": null,
+    "vehicle_make": null,
+    "vehicle_model": null,
+    "vehicle_year": null,
+    "vehicle_registration": null
+  },
+  "classification": {
+    "predictedClass": "MISSING_INFO",
+    "confidence": 0.8400000000000001,
+    "alternatives": [
+      {
+        "class": "NEW_CLAIM",
+        "score": 0.02
+      },
+      {
+        "class": "IGNORE",
+        "score": 0.15
+      }
+    ],
+    "reasoning": "Fallback heuristic — AI unavailable. Strong follow-up signals detected (11 pts): RE: prefix, reply to, our claim. Not a new claim."
+  },
+  "overallConfidence": 34,
+  "isDuplicate": false,
+  "_meta": {
+    "savedAt": "2026-04-18T06:30:33.086Z",
+    "localPath": "/home/z/my-project/claims-data/2026/April/PENDING_REVIEW/STF-833079 - Unknown Client",
+    "originalFolderPath": "Z:\\2026\\April\\PENDING_REVIEW\\STF-833079 - Unknown Client"
+  }
+}
