@@ -49,6 +49,24 @@ async function setConfigValue(key: string, value: string): Promise<void> {
 }
 
 /**
+ * Helper: Get SMTP from-email address from SystemConfig (for loop detection)
+ */
+async function getSMTPConfigFromDB(): Promise<{ fromEmail: string } | null> {
+  try {
+    const configs = await db.systemConfig.findMany({
+      where: { key: { in: ['smtp_user', 'smtp_from_email'] } },
+    })
+    const map: Record<string, string> = {}
+    for (const c of configs) map[c.key] = c.value
+    const fromEmail = map['smtp_from_email'] || map['smtp_user'] || ''
+    if (!fromEmail) return null
+    return { fromEmail }
+  } catch {
+    return null
+  }
+}
+
+/**
  * Helper: Save last poll result
  */
 async function savePollResult(count: number, error?: string) {
@@ -302,6 +320,81 @@ function parseMultipartParts(rawBody: string, boundary: string, attachments: { f
 }
 
 /**
+ * Check if an email should be skipped to prevent processing loops.
+ * Returns { skip: true, reason: string } if the email should be skipped.
+ *
+ * Defense layers:
+ * 1. Self-email: skip emails from the system's own IMAP user or SMTP from address
+ * 2. Same-domain: skip emails from the same domain as the system's email
+ * 3. Auto-reply headers: skip emails with standard auto-reply loop-prevention headers
+ * 4. Auto-reply subject patterns: skip emails with common auto-reply/OOO subjects
+ * 5. Stefco own auto-reply: skip emails we ourselves sent (X-Stefco-Auto-Reply)
+ */
+function shouldSkipEmail(
+  fromAddress: string,
+  subject: string,
+  rawSource: string,
+  systemEmailAddresses: string[],
+  systemDomains: string[],
+): { skip: boolean; reason: string } {
+  const fromLower = fromAddress.toLowerCase().trim()
+  const fromDomain = fromLower.includes('@') ? fromLower.split('@').slice(-1)[0] : ''
+
+  // Layer 1: Exact self-email match
+  for (const sysAddr of systemEmailAddresses) {
+    if (sysAddr && fromLower === sysAddr.toLowerCase()) {
+      return { skip: true, reason: `Self-email: from ${fromLower} matches system address ${sysAddr}` }
+    }
+  }
+
+  // Layer 2: Same domain as system (catches aliases, catch-alls)
+  if (fromDomain && systemDomains.length > 0) {
+    for (const domain of systemDomains) {
+      if (domain && fromDomain === domain.toLowerCase()) {
+        return { skip: true, reason: `Same-domain: from ${fromDomain} matches system domain ${domain}` }
+      }
+    }
+  }
+
+  // Layer 3: Standard auto-reply / loop-prevention headers
+  const headerCheck = rawSource.toLowerCase()
+  if (headerCheck.includes('x-stefco-auto-reply: true')) {
+    return { skip: true, reason: 'Stefco auto-reply detected via X-Stefco-Auto-Reply header' }
+  }
+  if (headerCheck.includes('auto-submitted: auto-replied') || headerCheck.includes('auto-submitted: auto-generated')) {
+    return { skip: true, reason: 'Auto-submitted email detected (Auto-Submitted header)' }
+  }
+  if (headerCheck.includes('x-auto-response-suppress: all')) {
+    return { skip: true, reason: 'Auto-response suppression header detected' }
+  }
+  if (headerCheck.includes('x-loop:')) {
+    return { skip: true, reason: 'X-Loop header detected (mail loop prevention)' }
+  }
+  if (headerCheck.includes('precedence: bulk') || headerCheck.includes('precedence: list') || headerCheck.includes('precedence: junk')) {
+    return { skip: true, reason: `Bulk/list mail detected (Precedence header)` }
+  }
+
+  // Layer 4: Auto-reply / out-of-office subject patterns
+  const autoReplySubjectPatterns = [
+    /^(auto[- ]?reply|out of office|ooo|autoreply|automatic reply|auto-generated|do not reply|no reply)\s*:/i,
+    /auto[- ]?response/i,
+    /out of office/i,
+    /out of the office/i,
+    /away from (the )?office/i,
+    /on (annual )?leave/i,
+    /claim received - \w+-\d+/i, // Our own auto-reply pattern: "Claim Received - STF-XXXXXX"
+    /re:.*claim received - \w+-\d+/i, // Replies to our auto-reply
+  ]
+  for (const pattern of autoReplySubjectPatterns) {
+    if (pattern.test(subject)) {
+      return { skip: true, reason: `Auto-reply subject pattern matched: "${subject.slice(0, 80)}"` }
+    }
+  }
+
+  return { skip: false, reason: '' }
+}
+
+/**
  * POST /api/email-poll
  */
 export async function POST() {
@@ -378,6 +471,30 @@ export async function POST() {
 
       console.error(`[email-poll] Processing ${messages.length} unread emails...`)
 
+      // ── Build system email address list for loop detection ──
+      // Collect all system-owned email addresses and domains so we can skip
+      // emails that originate from ourselves (preventing infinite auto-reply loops)
+      const imapUser = config.user.toLowerCase().trim()
+      const smtpConfig = await getSMTPConfigFromDB()
+      const smtpFromEmail = smtpConfig?.fromEmail?.toLowerCase().trim() || ''
+      const systemEmailAddresses = [imapUser, smtpFromEmail].filter(Boolean)
+
+      const systemDomains: string[] = []
+      for (const addr of systemEmailAddresses) {
+        if (addr.includes('@')) {
+          const domain = addr.split('@').slice(-1)[0]
+          if (domain && !systemDomains.includes(domain)) {
+            systemDomains.push(domain)
+          }
+        }
+      }
+
+      if (systemEmailAddresses.length > 0) {
+        console.error(`[email-poll] Loop detection active — system addresses: [${systemEmailAddresses.join(', ')}], domains: [${systemDomains.join(', ')}]`)
+      }
+
+      let skippedCount = 0
+
       for (const uid of messages) {
         try {
           const message = await client.fetchOne(uid, {
@@ -397,11 +514,21 @@ export async function POST() {
           const from = message.envelope.from?.[0]?.address || 'unknown@unknown.com'
           const subject = message.envelope.subject || '(no subject)'
 
-          // Parse email body
+          // ── Loop detection: skip self-emails and auto-replies ──
           const sourceStr = typeof message.source === 'string'
             ? message.source
             : Buffer.from(message.source).toString('utf-8')
 
+          const skipCheck = shouldSkipEmail(from, subject, sourceStr, systemEmailAddresses, systemDomains)
+          if (skipCheck.skip) {
+            console.error(`[email-poll] SKIPPING UID ${uid}: ${skipCheck.reason} — "${subject.slice(0, 60)}"`)
+            skippedCount++
+            // Still mark as Seen so we never process it again
+            await client.messageFlagsAdd(uid, ['\\Seen'])
+            continue
+          }
+
+          // Parse email body
           const { body, attachments } = parseEmailBody(sourceStr)
           console.error(`[email-poll] Parsed: "${subject}" — body: ${body.length} chars, ${attachments.length} attachments`)
 
@@ -436,15 +563,15 @@ export async function POST() {
       await db.auditLog.create({
         data: {
           action: 'imap_poll',
-          details: `IMAP poll completed. Processed ${processedCount}/${messages.length} emails in ${Date.now() - startTime}ms.`,
+          details: `IMAP poll completed. Processed ${processedCount}/${messages.length} emails, skipped ${skippedCount} (loop detection), failed ${failedCount}. Duration: ${Date.now() - startTime}ms.`,
           status: failedCount > 0 ? 'WARNING' : 'SUCCESS',
           processedBy: 'AUTO',
         },
       })
 
-      console.error(`[email-poll] ===== POLL COMPLETE: ${processedCount} processed, ${failedCount} failed in ${Date.now() - startTime}ms =====`)
+      console.error(`[email-poll] ===== POLL COMPLETE: ${processedCount} processed, ${skippedCount} skipped (loop), ${failedCount} failed in ${Date.now() - startTime}ms =====`)
 
-      return NextResponse.json({ success: true, processed: processedCount, failed: failedCount, total: messages.length, results: results.slice(0, 50), duration_ms: Date.now() - startTime })
+      return NextResponse.json({ success: true, processed: processedCount, skipped: skippedCount, failed: failedCount, total: messages.length, results: results.slice(0, 50), duration_ms: Date.now() - startTime })
     } catch (imapErr: unknown) {
       const errMessage = imapErr instanceof Error ? imapErr.message : String(imapErr)
       console.error(`[email-poll] IMAP error: ${errMessage}`)

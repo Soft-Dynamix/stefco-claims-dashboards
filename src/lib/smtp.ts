@@ -128,6 +128,16 @@ export async function sendClaimAcknowledgment(params: {
       from: `"${config.fromName}" <${config.fromEmail}>`,
       to: params.toEmail,
       subject: replySubject,
+      // ── Loop-prevention headers ──
+      // These headers allow the IMAP poller to detect and skip its own auto-replies,
+      // preventing an infinite email processing loop.
+      headers: {
+        'X-Auto-Response-Suppress': 'All',
+        'X-Stefco-Auto-Reply': 'true',
+        'Auto-Submitted': 'auto-replied',
+        'Precedence': 'bulk',
+        'X-Loop': config.fromEmail,
+      },
       text: `Dear ${params.clientName},
 
 Thank you for your email. Your claim has been received and is being processed.
