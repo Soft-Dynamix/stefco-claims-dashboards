@@ -117,6 +117,63 @@ model ClaimFeedback {
   @@map("claim_feedback")
 }
 
+/// Structured feedback when emails are rejected/ignored
+model RejectionFeedback {
+  id                String   @id @default(cuid())
+  emailQueueId      String
+  
+  // Classification at time of rejection
+  originalClassification  String?  // What AI thought
+  originalConfidence     Float?
+  
+  // Why it was rejected
+  rejectionCategory String   // duplicate, follow_up, spam, marketing, wrong_sender, not_a_claim, already_processed, test_email, other
+  rejectionReason   String?  // Free text explanation
+  
+  // Thread detection info
+  isFollowUp        Boolean  @default(false)
+  relatedClaimId    String?  // If this was a follow-up to existing claim
+  threadSubject     String?  // Normalized subject for thread matching
+  
+  // Learning hints for future
+  suggestedRule     String?  // e.g., "Ignore 'Re:' emails from this sender"
+  applyToSender     Boolean  @default(false)  // Create ignore rule for sender?
+  
+  // Metadata
+  emailSubject      String?
+  emailFrom         String?
+  emailFromDomain   String?
+  
+  createdBy         String?
+  createdAt         DateTime @default(now())
+
+  @@index([rejectionCategory])
+  @@index([emailFromDomain])
+  @@map("rejection_feedback")
+}
+
+/// Thread detection patterns - learned from follow-up emails
+model ThreadPattern {
+  id                String   @id @default(cuid())
+  senderDomain      String
+  
+  // Pattern details
+  subjectPrefix     String?  // e.g., "Re:", "FWD:", "RE:"
+  normalizedSubject String?  // Subject without prefixes
+  
+  // How often this pattern indicates follow-up
+  followUpCount     Int      @default(0)
+  newClaimCount     Int      @default(0)
+  isFollowUpProbability Float @default(0)
+  
+  isActive          Boolean  @default(true)
+  createdAt         DateTime @default(now())
+  updatedAt         DateTime @updatedAt
+
+  @@unique([senderDomain, normalizedSubject])
+  @@map("thread_patterns")
+}
+
 // =============================================================================
 // EMAIL PROCESSING MODELS
 // =============================================================================

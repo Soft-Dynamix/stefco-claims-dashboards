@@ -93,6 +93,65 @@ Key Files Updated:
 - src/components/sections/inbox-section.tsx - Added polling UI
 
 ---
+Task ID: 3
+Agent: Main Agent
+Task: Implement structured feedback collection and thread detection for faster AI learning
+
+Work Log:
+- Added RejectionFeedback model to capture detailed rejection reasons:
+  - Category (follow_up, duplicate, spam, not_a_claim, etc.)
+  - Free text reason
+  - Related claim linking
+  - Suggested rule creation
+- Added ThreadPattern model for follow-up email detection:
+  - Subject normalization
+  - Follow-up probability tracking
+  - Sender domain patterns
+- Created FeedbackModal component:
+  - Category selection with descriptions
+  - Follow-up detection toggle
+  - Related claim input
+  - Rule creation option
+  - Auto-suggested rules based on category
+- Created rejection feedback API endpoint:
+  - POST: Submit feedback with learning
+  - GET: Fetch feedback history
+  - Updates classification knowledge
+  - Creates sender ignore rules
+  - Updates thread patterns
+- Created thread patterns API endpoint:
+  - GET: List all patterns
+  - POST: Check if subject is likely follow-up
+- Updated InboxSection:
+  - Integration with feedback modal
+  - Follow-up warning indicator
+  - "Ignore with Reason" button
+- Updated LearningSection:
+  - New "Rejection Feedback" tab
+  - New "Thread Detection" tab
+  - "How Learning Works" explanation card
+  - Category badges for feedback types
+- Updated learning API to include feedback stats
+
+Stage Summary:
+- Structured feedback collection for faster AI learning
+- Thread detection for distinguishing follow-ups from new claims
+- Visual indicators for likely follow-up emails
+- Auto-suggested ignore rules
+- Comprehensive learning dashboard
+
+Key Files Created:
+- src/components/feedback-modal.tsx - Feedback collection UI
+- src/app/api/rejection-feedback/route.ts - Feedback API
+- src/app/api/thread-patterns/route.ts - Thread detection API
+
+Key Files Updated:
+- prisma/schema.prisma - Added RejectionFeedback, ThreadPattern models
+- src/components/sections/inbox-section.tsx - Feedback integration
+- src/components/sections/learning-section.tsx - New tabs and features
+- src/app/api/learning/route.ts - Added feedback stats
+
+---
 ## Current Project Status
 
 **Status:** ✅ Fully Functional - Ready for Production
@@ -111,6 +170,9 @@ Key Files Updated:
 11. ✅ IMAP email polling service
 12. ✅ Manual poll button
 13. ✅ Scheduler controls
+14. ✅ Structured rejection feedback with categories
+15. ✅ Thread detection for follow-up emails
+16. ✅ Learning dashboard with feedback history
 
 **Pending for Production:**
 - Configure valid IMAP credentials

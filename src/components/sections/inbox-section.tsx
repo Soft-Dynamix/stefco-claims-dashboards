@@ -52,8 +52,10 @@ import {
   Download,
   AlertCircle,
   CheckCircle2,
+  MessageSquare,
 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
+import { FeedbackModal, RejectionFeedbackData } from "@/components/feedback-modal";
 
 interface Email {
   id: string;
@@ -91,6 +93,8 @@ export function InboxSection() {
   const [searchQuery, setSearchQuery] = useState("");
   const [pollingStatus, setPollingStatus] = useState<PollingStatus | null>(null);
   const [isPolling, setIsPolling] = useState(false);
+  const [feedbackModalOpen, setFeedbackModalOpen] = useState(false);
+  const [emailToReject, setEmailToReject] = useState<Email | null>(null);
   const { toast } = useToast();
 
   useEffect(() => {
@@ -199,6 +203,42 @@ export function InboxSection() {
     setDetailsOpen(true);
   };
 
+  const openRejectModal = (email: Email) => {
+    setEmailToReject(email);
+    setFeedbackModalOpen(true);
+  };
+
+  const handleRejectionFeedback = async (feedback: RejectionFeedbackData) => {
+    try {
+      const res = await fetch("/api/rejection-feedback", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(feedback),
+      });
+
+      const json = await res.json();
+
+      if (json.success) {
+        toast({
+          title: "Feedback Submitted",
+          description: feedback.applyToSender
+            ? "Email ignored and rule created for future emails from this sender"
+            : "Email ignored. This helps the AI learn!",
+        });
+        fetchEmails();
+        setDetailsOpen(false);
+      } else {
+        throw new Error(json.error);
+      }
+    } catch (error) {
+      toast({
+        title: "Error",
+        description: "Failed to submit feedback",
+        variant: "destructive",
+      });
+    }
+  };
+
   const classifyEmail = async (emailId: string, classification: string) => {
     try {
       const res = await fetch(`/api/email-inbox/${emailId}`, {
@@ -305,6 +345,13 @@ export function InboxSection() {
         {classification}
       </Badge>
     );
+  };
+
+  // Check if email is likely a follow-up based on subject
+  const isLikelyFollowUp = (email: Email) => {
+    if (!email.subject) return false;
+    const subject = email.subject.toLowerCase();
+    return subject.startsWith("re:") || subject.startsWith("fwd:") || subject.includes("follow-up");
   };
 
   const filteredEmails = emails.filter((email) => {
@@ -499,8 +546,13 @@ export function InboxSection() {
               ) : (
                 filteredEmails.map((email) => (
                   <TableRow key={email.id}>
-                    <TableCell className="font-medium max-w-[200px] truncate">
-                      {email.subject || "(No Subject)"}
+                    <TableCell className="font-medium max-w-[200px]">
+                      <div className="flex items-center gap-2">
+                        {isLikelyFollowUp(email) && (
+                          <MessageSquare className="h-3 w-3 text-blue-500 flex-shrink-0" title="Likely follow-up" />
+                        )}
+                        <span className="truncate">{email.subject || "(No Subject)"}</span>
+                      </div>
                     </TableCell>
                     <TableCell className="max-w-[150px] truncate">
                       {email.from || "-"}
@@ -646,6 +698,21 @@ export function InboxSection() {
               
               <TabsContent value="actions" className="mt-4">
                 <div className="space-y-4">
+                  {/* Follow-up warning */}
+                  {isLikelyFollowUp(selectedEmail) && (
+                    <Card className="border-blue-500/50 bg-blue-500/10">
+                      <CardContent className="p-4">
+                        <div className="flex items-center gap-2">
+                          <MessageSquare className="h-4 w-4 text-blue-500" />
+                          <span className="font-medium">This looks like a follow-up email</span>
+                        </div>
+                        <p className="text-sm text-muted-foreground mt-1">
+                          Subject starts with "Re:" or "FWD:" - this might be a reply to an existing claim, not a new one.
+                        </p>
+                      </CardContent>
+                    </Card>
+                  )}
+                
                   <Card>
                     <CardHeader>
                       <CardTitle className="text-lg">Process This Email</CardTitle>
@@ -666,13 +733,17 @@ export function InboxSection() {
                         <Button
                           variant="destructive"
                           className="w-full"
-                          onClick={() => classifyEmail(selectedEmail.id, "IGNORE")}
+                          onClick={() => openRejectModal(selectedEmail)}
                           disabled={selectedEmail.status === "IGNORED"}
                         >
                           <XCircle className="mr-2 h-4 w-4" />
-                          Ignore Email
+                          Ignore with Reason
                         </Button>
                       </div>
+                      
+                      <p className="text-sm text-muted-foreground text-center">
+                        Ignoring with a reason helps the AI learn to make better decisions
+                      </p>
                     </CardContent>
                   </Card>
                   
@@ -696,6 +767,14 @@ export function InboxSection() {
           )}
         </DialogContent>
       </Dialog>
+
+      {/* Feedback Modal */}
+      <FeedbackModal
+        open={feedbackModalOpen}
+        onOpenChange={setFeedbackModalOpen}
+        email={emailToReject}
+        onSubmit={handleRejectionFeedback}
+      />
     </div>
   );
 }

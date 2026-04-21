@@ -12,12 +12,16 @@ export async function GET(request: NextRequest) {
         totalKnowledge,
         totalSenderProfiles,
         totalIgnoreRules,
+        totalRejectionFeedback,
+        totalThreadPatterns,
         avgConfidence,
       ] = await Promise.all([
         db.learningPattern.count({ where: { isActive: true } }),
         db.classificationKnowledge.count({ where: { isActive: true } }),
         db.senderPattern.count(),
         db.senderIgnoreRule.count({ where: { isActive: true } }),
+        db.rejectionFeedback.count(),
+        db.threadPattern.count({ where: { isActive: true } }),
         db.learningPattern.aggregate({
           _avg: { confidence: true },
         }),
@@ -52,6 +56,8 @@ export async function GET(request: NextRequest) {
           totalKnowledge,
           totalSenderProfiles,
           totalIgnoreRules,
+          totalRejectionFeedback,
+          totalThreadPatterns,
           avgConfidence: avgConfidence._avg.confidence || 0,
         },
         automationLevels: automationLevels.map((a) => ({

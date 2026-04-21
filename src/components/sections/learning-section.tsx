@@ -40,6 +40,9 @@ import {
   Plus,
   Search,
   RefreshCw,
+  MessageSquare,
+  XCircle,
+  Lightbulb,
 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 
@@ -94,10 +97,39 @@ interface SenderPattern {
   confidenceScore: number;
 }
 
+interface RejectionFeedbackItem {
+  id: string;
+  emailQueueId: string;
+  rejectionCategory: string;
+  rejectionReason: string | null;
+  isFollowUp: boolean;
+  relatedClaimId: string | null;
+  applyToSender: boolean;
+  suggestedRule: string | null;
+  emailSubject: string | null;
+  emailFrom: string | null;
+  emailFromDomain: string | null;
+  originalClassification: string | null;
+  originalConfidence: number | null;
+  createdAt: string;
+}
+
+interface ThreadPatternItem {
+  id: string;
+  senderDomain: string;
+  subjectPrefix: string | null;
+  normalizedSubject: string | null;
+  followUpCount: number;
+  newClaimCount: number;
+  isFollowUpProbability: number;
+}
+
 export function LearningSection() {
   const [stats, setStats] = useState<LearningStats | null>(null);
   const [patterns, setPatterns] = useState<LearningPattern[]>([]);
   const [senders, setSenders] = useState<SenderPattern[]>([]);
+  const [rejectionFeedback, setRejectionFeedback] = useState<RejectionFeedbackItem[]>([]);
+  const [threadPatterns, setThreadPatterns] = useState<ThreadPatternItem[]>([]);
   const [loading, setLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState("");
   const [activeTab, setActiveTab] = useState("overview");
@@ -110,6 +142,8 @@ export function LearningSection() {
   useEffect(() => {
     if (activeTab === "patterns") fetchPatterns();
     if (activeTab === "senders") fetchSenders();
+    if (activeTab === "feedback") fetchRejectionFeedback();
+    if (activeTab === "threads") fetchThreadPatterns();
   }, [activeTab]);
 
   const fetchStats = async () => {
@@ -145,6 +179,26 @@ export function LearningSection() {
     }
   };
 
+  const fetchRejectionFeedback = async () => {
+    try {
+      const res = await fetch("/api/rejection-feedback?limit=100");
+      const json = await res.json();
+      setRejectionFeedback(json);
+    } catch (error) {
+      console.error("Failed to fetch rejection feedback:", error);
+    }
+  };
+
+  const fetchThreadPatterns = async () => {
+    try {
+      const res = await fetch("/api/thread-patterns");
+      const json = await res.json();
+      setThreadPatterns(json);
+    } catch (error) {
+      console.error("Failed to fetch thread patterns:", error);
+    }
+  };
+
   const getAutomationLevelColor = (level: string) => {
     const colors: Record<string, string> = {
       manual: "bg-red-500",
@@ -163,6 +217,25 @@ export function LearningSection() {
     return (
       <Badge variant={variants[level] || "outline"}>
         {level.replace("_", " ").toUpperCase()}
+      </Badge>
+    );
+  };
+
+  const getCategoryBadge = (category: string) => {
+    const colors: Record<string, string> = {
+      follow_up: "bg-blue-500",
+      duplicate: "bg-orange-500",
+      not_a_claim: "bg-gray-500",
+      spam: "bg-red-500",
+      marketing: "bg-purple-500",
+      wrong_sender: "bg-yellow-500",
+      already_processed: "bg-orange-500",
+      test_email: "bg-cyan-500",
+      other: "bg-gray-400",
+    };
+    return (
+      <Badge className={colors[category] || "bg-gray-500"}>
+        {category.replace("_", " ")}
       </Badge>
     );
   };
@@ -240,6 +313,47 @@ export function LearningSection() {
         </Card>
       </div>
 
+      {/* How Learning Works */}
+      <Card className="border-green-500/30 bg-green-500/5">
+        <CardHeader>
+          <CardTitle className="text-lg flex items-center gap-2">
+            <Lightbulb className="h-5 w-5 text-green-500" />
+            How the System Learns
+          </CardTitle>
+        </CardHeader>
+        <CardContent>
+          <div className="grid md:grid-cols-3 gap-4 text-sm">
+            <div className="space-y-2">
+              <div className="font-medium flex items-center gap-2">
+                <span className="w-6 h-6 rounded-full bg-blue-500 text-white flex items-center justify-center text-xs">1</span>
+                You Provide Feedback
+              </div>
+              <p className="text-muted-foreground pl-8">
+                When you reject an email with a reason, the system captures what went wrong and why.
+              </p>
+            </div>
+            <div className="space-y-2">
+              <div className="font-medium flex items-center gap-2">
+                <span className="w-6 h-6 rounded-full bg-yellow-500 text-white flex items-center justify-center text-xs">2</span>
+                Patterns Are Created
+              </div>
+              <p className="text-muted-foreground pl-8">
+                The system creates rules like "Re: emails from santam.co.za are usually follow-ups, not new claims".
+              </p>
+            </div>
+            <div className="space-y-2">
+              <div className="font-medium flex items-center gap-2">
+                <span className="w-6 h-6 rounded-full bg-green-500 text-white flex items-center justify-center text-xs">3</span>
+                Future Decisions Improve
+              </div>
+              <p className="text-muted-foreground pl-8">
+                Next time a similar email arrives, the AI uses learned patterns to make better decisions.
+              </p>
+            </div>
+          </div>
+        </CardContent>
+      </Card>
+
       {/* Automation Levels */}
       <Card>
         <CardHeader>
@@ -288,6 +402,8 @@ export function LearningSection() {
       <Tabs value={activeTab} onValueChange={setActiveTab}>
         <TabsList>
           <TabsTrigger value="overview">Top Senders</TabsTrigger>
+          <TabsTrigger value="feedback">Rejection Feedback</TabsTrigger>
+          <TabsTrigger value="threads">Thread Detection</TabsTrigger>
           <TabsTrigger value="patterns">Patterns</TabsTrigger>
           <TabsTrigger value="senders">All Senders</TabsTrigger>
         </TabsList>
@@ -370,6 +486,146 @@ export function LearningSection() {
                   ))}
                 </TableBody>
               </Table>
+            </CardContent>
+          </Card>
+        </TabsContent>
+
+        <TabsContent value="feedback" className="mt-4">
+          <Card>
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                <XCircle className="h-5 w-5 text-red-500" />
+                Rejection Feedback History
+              </CardTitle>
+              <CardDescription>
+                Learn from why emails were rejected - this teaches the AI to improve
+              </CardDescription>
+            </CardHeader>
+            <CardContent>
+              <ScrollArea className="h-[500px]">
+                {rejectionFeedback.length === 0 ? (
+                  <div className="text-center py-8 text-muted-foreground">
+                    No rejection feedback yet. When you reject emails with reasons, they will appear here.
+                  </div>
+                ) : (
+                  <Table>
+                    <TableHeader>
+                      <TableRow>
+                        <TableHead>Date</TableHead>
+                        <TableHead>Subject</TableHead>
+                        <TableHead>Category</TableHead>
+                        <TableHead>Reason</TableHead>
+                        <TableHead>AI Thought</TableHead>
+                        <TableHead>Actions</TableHead>
+                      </TableRow>
+                    </TableHeader>
+                    <TableBody>
+                      {rejectionFeedback.map((item) => (
+                        <TableRow key={item.id}>
+                          <TableCell className="text-sm">
+                            {new Date(item.createdAt).toLocaleDateString()}
+                          </TableCell>
+                          <TableCell className="max-w-[200px] truncate">
+                            {item.emailSubject || "-"}
+                          </TableCell>
+                          <TableCell>
+                            <div className="flex items-center gap-2">
+                              {getCategoryBadge(item.rejectionCategory)}
+                              {item.isFollowUp && (
+                                <MessageSquare className="h-3 w-3 text-blue-500" />
+                              )}
+                            </div>
+                          </TableCell>
+                          <TableCell className="max-w-[200px] truncate text-sm text-muted-foreground">
+                            {item.rejectionReason || "-"}
+                          </TableCell>
+                          <TableCell>
+                            <div className="text-sm">
+                              <Badge variant="outline">{item.originalClassification || "N/A"}</Badge>
+                              {item.originalConfidence !== null && (
+                                <span className="text-muted-foreground ml-1">
+                                  ({item.originalConfidence.toFixed(0)}%)
+                                </span>
+                              )}
+                            </div>
+                          </TableCell>
+                          <TableCell>
+                            {item.applyToSender && (
+                              <Badge variant="secondary" className="text-xs">
+                                Rule Created
+                              </Badge>
+                            )}
+                          </TableCell>
+                        </TableRow>
+                      ))}
+                    </TableBody>
+                  </Table>
+                )}
+              </ScrollArea>
+            </CardContent>
+          </Card>
+        </TabsContent>
+
+        <TabsContent value="threads" className="mt-4">
+          <Card>
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                <MessageSquare className="h-5 w-5 text-blue-500" />
+                Thread Detection Patterns
+              </CardTitle>
+              <CardDescription>
+                Learn to distinguish follow-up emails from new claims based on subject patterns
+              </CardDescription>
+            </CardHeader>
+            <CardContent>
+              <ScrollArea className="h-[500px]">
+                {threadPatterns.length === 0 ? (
+                  <div className="text-center py-8 text-muted-foreground">
+                    No thread patterns learned yet. When you mark emails as follow-ups, patterns will appear here.
+                  </div>
+                ) : (
+                  <Table>
+                    <TableHeader>
+                      <TableRow>
+                        <TableHead>Domain</TableHead>
+                        <TableHead>Prefix</TableHead>
+                        <TableHead>Normalized Subject</TableHead>
+                        <TableHead>Follow-ups</TableHead>
+                        <TableHead>New Claims</TableHead>
+                        <TableHead>P(Follow-up)</TableHead>
+                      </TableRow>
+                    </TableHeader>
+                    <TableBody>
+                      {threadPatterns.map((pattern) => (
+                        <TableRow key={pattern.id}>
+                          <TableCell className="font-medium">{pattern.senderDomain}</TableCell>
+                          <TableCell>
+                            {pattern.subjectPrefix ? (
+                              <Badge variant="outline">{pattern.subjectPrefix}:</Badge>
+                            ) : (
+                              "-"
+                            )}
+                          </TableCell>
+                          <TableCell className="max-w-[250px] truncate">
+                            {pattern.normalizedSubject || "-"}
+                          </TableCell>
+                          <TableCell>{pattern.followUpCount}</TableCell>
+                          <TableCell>{pattern.newClaimCount}</TableCell>
+                          <TableCell>
+                            <div className="flex items-center gap-2">
+                              <Progress 
+                                value={pattern.isFollowUpProbability * 100} 
+                                className="w-16" 
+                              />
+                              {(pattern.isFollowUpProbability * 100).toFixed(0)}%
+                            </div>
+                          </TableCell>
+                        </TableRow>
+                      ))}
+                    </TableBody>
+                  </Table>
+                )}
+              </ScrollArea>
             </CardContent>
           </Card>
         </TabsContent>
