@@ -31,6 +31,7 @@ model InsuranceCompany {
   claims        Claim[]
   learningPatterns LearningPattern[]
   classificationKnowledge ClassificationKnowledge[]
+  extractionPatterns ExtractionPattern[]
 
   @@map("insurance_companies")
 }
@@ -475,6 +476,107 @@ model InsuranceDomainKnowledge {
   updatedAt       DateTime @updatedAt
 
   @@map("insurance_domain_knowledge")
+}
+
+// =============================================================================
+// EXTRACTION PATTERN LEARNING MODELS
+// =============================================================================
+
+/// Company-specific extraction patterns for each field type
+model ExtractionPattern {
+  id                  String   @id @default(cuid())
+  insuranceCompanyId  String
+  insuranceCompany    InsuranceCompany @relation(fields: [insuranceCompanyId], references: [id])
+  
+  // What field this pattern extracts
+  fieldType           String   // claimNumber, policyNumber, clientName, vehicleReg, excess, etc.
+  
+  // Pattern definition
+  patternType         String   // regex, keyword, position, format
+  patternValue        String   // The actual regex or pattern
+  
+  // Example and description
+  description         String?  // Human-readable description
+  exampleMatch        String?  // Example of what matches
+  
+  // Confidence and usage
+  confidence          Int      @default(70)  // 50-100
+  successCount        Int      @default(0)
+  failureCount        Int      @default(0)
+  
+  // Pattern priority (higher = try first)
+  priority            Int      @default(0)
+  
+  isActive            Boolean  @default(true)
+  isSystemPattern     Boolean  @default(false)  // System-generated vs user-taught
+  
+  createdAt           DateTime @default(now())
+  updatedAt           DateTime @updatedAt
+
+  @@unique([insuranceCompanyId, fieldType, patternValue])
+  @@index([insuranceCompanyId, fieldType])
+  @@map("extraction_patterns")
+}
+
+/// Sample extractions for teaching the system (few-shot examples)
+model ExtractionExample {
+  id                  String   @id @default(cuid())
+  insuranceCompanyId  String?
+  
+  // The field being extracted
+  fieldType           String   // claimNumber, policyNumber, clientName, etc.
+  
+  // The sample data
+  sourceText          String   // Original text snippet
+  extractedValue      String   // What was extracted
+  contextBefore       String?  // Text before the match
+  contextAfter        String?  // Text after the match
+  
+  // How it was learned
+  learnedFrom         String   // user_correction, initial_extraction, manual_entry
+  verified            Boolean  @default(true)
+  
+  // Email reference
+  emailQueueId        String?
+  
+  createdAt           DateTime @default(now())
+
+  @@index([insuranceCompanyId, fieldType])
+  @@map("extraction_examples")
+}
+
+/// Claim number format patterns per insurance company
+model ClaimNumberFormat {
+  id                  String   @id @default(cuid())
+  insuranceCompanyId  String
+  
+  // Format definition
+  formatPattern       String   // e.g., "STM-YYYY-NNNNN", "OUT/NNNNNN/YY"
+  prefix              String?  // e.g., "STM", "OUT", "CLM"
+  separator           String?  // e.g., "-", "/", ""
+  
+  // Number structure
+  hasYear             Boolean  @default(false)
+  yearPosition        Int?     // Position of year in format
+  numberLength        Int?     // Length of sequential number
+  
+  // Regex pattern
+  regexPattern        String   // Full regex to match
+  
+  // Example
+  example             String?  // Example claim number
+  
+  // Confidence
+  matchCount          Int      @default(0)
+  confidence          Int      @default(70)
+  
+  isActive            Boolean  @default(true)
+  
+  createdAt           DateTime @default(now())
+  updatedAt           DateTime @updatedAt
+
+  @@unique([insuranceCompanyId, formatPattern])
+  @@map("claim_number_formats")
 }
 
 // =============================================================================

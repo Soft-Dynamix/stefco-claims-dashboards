@@ -202,6 +202,57 @@ Key Files Updated:
 - src/components/sections/dashboard-section.tsx - Added domain suggestions card
 
 ---
+Task ID: 5
+Agent: Main Agent
+Task: Implement company-specific extraction pattern learning
+
+Work Log:
+- Added ExtractionPattern model for storing company-specific extraction rules:
+  - Field types: claimNumber, policyNumber, clientName, vehicleReg, etc.
+  - Pattern types: regex, keyword, position, format
+  - Confidence tracking with success/failure counts
+- Added ExtractionExample model for few-shot learning examples:
+  - Stores source text, extracted value, context
+  - Tracks how pattern was learned (user_correction vs initial)
+- Added ClaimNumberFormat model for SA insurance claim formats:
+  - 15+ pre-defined SA insurance company formats
+  - Regex patterns for matching
+  - Year detection and number length
+- Created extraction patterns API:
+  - GET: Fetch patterns with examples
+  - POST: Create new patterns
+  - PUT: Update confidence on success/failure
+- Created claim number formats API:
+  - GET: Fetch all formats
+  - POST: Seed SA insurance formats
+  - PUT: Test claim number against patterns
+- Created extraction pattern utility library:
+  - learnExtractionPattern(): Learn from user corrections
+  - extractWithPatterns(): Extract fields using learned patterns
+  - seedDefaultPatterns(): Generate patterns for new companies
+- Updated Insurance Section UI with tabs:
+  - Companies: List and manage insurance companies
+  - Extraction Patterns: View/test/add patterns
+  - Claim Number Formats: Test and view SA formats
+- Added "Test Claim Number" feature to identify company from format
+
+Stage Summary:
+- Company-specific extraction patterns for different data formats
+- 15+ SA insurance claim number formats pre-defined
+- Pattern learning from user corrections
+- Pattern testing UI in Insurance section
+- Confidence tracking for pattern reliability
+
+Key Files Created:
+- src/app/api/extraction-patterns/route.ts - Extraction patterns API
+- src/app/api/claim-number-formats/route.ts - Claim formats API
+- src/lib/extraction-patterns.ts - Pattern learning/matching utility
+
+Key Files Updated:
+- prisma/schema.prisma - Added ExtractionPattern, ExtractionExample, ClaimNumberFormat
+- src/components/sections/insurance-section.tsx - Added tabs for patterns and formats
+
+---
 ## Current Project Status
 
 **Status:** ✅ Fully Functional - Ready for Production
@@ -227,6 +278,10 @@ Key Files Updated:
 18. ✅ Domain-to-company suggestion system
 19. ✅ SA insurance company domain knowledge base
 20. ✅ Company name detection from email signatures
+21. ✅ ExtractionPattern model for company-specific data extraction
+22. ✅ ClaimNumberFormat model with SA insurance formats
+23. ✅ Pattern learning from user corrections
+24. ✅ Pattern testing UI in Insurance section
 
 **Pending for Production:**
 - Configure valid IMAP credentials
