@@ -1,0 +1,156 @@
+import { NextRequest, NextResponse } from "next/server";
+import { db } from "@/lib/db";
+
+export async function GET(request: NextRequest) {
+  try {
+    const searchParams = request.nextUrl.searchParams;
+    const type = searchParams.get("type") || "stats";
+
+    if (type === "stats") {
+      const [
+        totalPatterns,
+        totalKnowledge,
+        totalSenderProfiles,
+        totalIgnoreRules,
+        avgConfidence,
+      ] = await Promise.all([
+        db.learningPattern.count({ where: { isActive: true } }),
+        db.classificationKnowledge.count({ where: { isActive: true } }),
+        db.senderPattern.count(),
+        db.senderIgnoreRule.count({ where: { isActive: true } }),
+        db.learningPattern.aggregate({
+          _avg: { confidence: true },
+        }),
+      ]);
+
+      // Get automation level distribution
+      const automationLevels = await db.senderPattern.groupBy({
+        by: ["automationLevel"],
+        _count: true,
+      });
+
+      // Get top sender domains
+      const topSenders = await db.senderPattern.findMany({
+        take: 10,
+        orderBy: { totalEmails: "desc" },
+      });
+
+      // Get recent learning patterns
+      const recentPatterns = await db.learningPattern.findMany({
+        take: 10,
+        orderBy: { updatedAt: "desc" },
+        include: {
+          insuranceCompany: {
+            select: { name: true },
+          },
+        },
+      });
+
+      return NextResponse.json({
+        stats: {
+          totalPatterns,
+          totalKnowledge,
+          totalSenderProfiles,
+          totalIgnoreRules,
+          avgConfidence: avgConfidence._avg.confidence || 0,
+        },
+        automationLevels: automationLevels.map((a) => ({
+          level: a.automationLevel,
+          count: a._count,
+        })),
+        topSenders,
+        recentPatterns,
+      });
+    }
+
+    if (type === "patterns") {
+      const patterns = await db.learningPattern.findMany({
+        orderBy: { updatedAt: "desc" },
+        include: {
+          insuranceCompany: {
+            select: { name: true },
+          },
+        },
+      });
+      return NextResponse.json(patterns);
+    }
+
+    if (type === "senders") {
+      const senders = await db.senderPattern.findMany({
+        orderBy: { totalEmails: "desc" },
+      });
+      return NextResponse.json(senders);
+    }
+
+    if (type === "knowledge") {
+      const knowledge = await db.classificationKnowledge.findMany({
+        orderBy: { updatedAt: "desc" },
+        include: {
+          insuranceCompany: {
+            select: { name: true },
+          },
+        },
+      });
+      return NextResponse.json(knowledge);
+    }
+
+    if (type === "ignore-rules") {
+      const rules = await db.senderIgnoreRule.findMany({
+        orderBy: { ignoreCount: "desc" },
+      });
+      return NextResponse.json(rules);
+    }
+
+    return NextResponse.json({ error: "Invalid type" }, { status: 400 });
+  } catch (error) {
+    console.error("Learning GET error:", error);
+    return NextResponse.json(
+      { error: "Failed to fetch learning data" },
+      { status: 500 }
+    );
+  }
+}
+
+export async function POST(request: NextRequest) {
+  try {
+    const body = await request.json();
+    
+    if (body.type === "pattern") {
+      const pattern = await db.learningPattern.create({
+        data: {
+          senderDomain: body.senderDomain,
+          insuranceCompanyId: body.insuranceCompanyId,
+          fieldName: body.fieldName,
+          patternHint: body.patternHint,
+          exampleOriginal: body.exampleOriginal,
+          exampleCorrected: body.exampleCorrected,
+          confidence: body.confidence || 55,
+        },
+      });
+      return NextResponse.json(pattern);
+    }
+
+    if (body.type === "knowledge") {
+      const knowledge = await db.classificationKnowledge.create({
+        data: {
+          senderDomain: body.senderDomain,
+          subject: body.subject,
+          bodySnippet: body.bodySnippet,
+          originalClassification: body.originalClassification,
+          correctedClassification: body.correctedClassification,
+          confidence: body.confidence,
+          insuranceCompanyId: body.insuranceCompanyId,
+        },
+      });
+      return NextResponse.json(knowledge);
+    }
+
+    return NextResponse.json({ error: "Invalid type" }, { status: 400 });
+  } catch (error) {
+    console.error("Learning POST error:", error);
+    return NextResponse.json(
+      { error: "Failed to create learning data" },
+      { status: 500 }
+    );
+  }
+}
