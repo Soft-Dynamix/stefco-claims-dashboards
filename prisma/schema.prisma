@@ -400,6 +400,84 @@ model SenderIgnoreRule {
 }
 
 // =============================================================================
+// AUTO-DETECTION & SUGGESTION MODELS
+// =============================================================================
+
+/// Suggested domain-to-company mappings awaiting review
+model DomainSuggestion {
+  id                  String   @id @default(cuid())
+  senderDomain        String   @unique
+  
+  // Detected from email content
+  detectedCompanyName String?  // Company name found in email signature/content
+  detectedFromEmail   String?  // Original email address
+  detectedFromName    String?  // Sender display name
+  
+  // AI suggestion
+  suggestedCompanyId  String?  // Link to existing company if match found
+  suggestedCompanyName String? // Suggested new company name
+  confidenceScore     Float    @default(0)
+  
+  // Evidence
+  emailCount          Int      @default(1)  // How many emails from this domain
+  claimCount          Int      @default(0)  // How many claims created
+  sampleSubjects      String?  // JSON array of sample email subjects
+  
+  // Status
+  status              String   @default("pending") // pending, approved, rejected, auto_approved
+  reviewedBy          String?
+  reviewedAt          DateTime?
+  
+  // Final mapping
+  linkedCompanyId     String?
+  
+  createdAt           DateTime @default(now())
+  updatedAt           DateTime @updatedAt
+
+  @@index([status])
+  @@map("domain_suggestions")
+}
+
+/// Patterns for auto-detecting insurance companies from domain names
+model CompanyDetectionPattern {
+  id              String   @id @default(cuid())
+  
+  // Pattern matching
+  domainPattern   String   @unique  // e.g., "*.santam.co.za", "claims.*.com"
+  companyNameHint String?  // Regex or hint to extract company name
+  
+  // Mapping
+  insuranceCompanyId String?
+  
+  // Statistics
+  matchCount      Int      @default(0)
+  successRate     Float    @default(0)
+  
+  isActive        Boolean  @default(true)
+  autoApprove     Boolean  @default(false)  // Auto-approve if confidence > 90%
+  
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+
+  @@map("company_detection_patterns")
+}
+
+/// Known insurance company domain patterns (seeded data)
+model InsuranceDomainKnowledge {
+  id              String   @id @default(cuid())
+  domainPattern   String   @unique  // e.g., "santam.co.za", "outsurance.co.za"
+  companyName     String   // Official company name
+  shortName       String?  // Common short name
+  country         String   @default("ZA")  // Country code
+  isActive        Boolean  @default(true)
+  
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+
+  @@map("insurance_domain_knowledge")
+}
+
+// =============================================================================
 // SYSTEM MODELS
 // =============================================================================
 

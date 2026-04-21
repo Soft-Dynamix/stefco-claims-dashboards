@@ -30,6 +30,7 @@ import {
   TrendingUp,
   Printer,
 } from "lucide-react";
+import { DomainSuggestionsCard } from "@/components/domain-suggestions-card";
 
 interface DashboardData {
   stats: {
@@ -213,6 +214,9 @@ export function DashboardSection() {
           </CardContent>
         </Card>
       </div>
+
+      {/* Domain Suggestions */}
+      <DomainSuggestionsCard />
 
       {/* Claims by Status */}
       <div className="grid gap-4 md:grid-cols-2">

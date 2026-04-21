@@ -75,6 +75,174 @@ function extractDomain(email: string | null): string | null {
   return match ? match[1].toLowerCase() : null;
 }
 
+// Check if domain is known (linked to insurance company or has suggestion)
+async function checkAndCreateDomainSuggestion(
+  domain: string,
+  fromEmail: string | null,
+  fromName: string | null,
+  subject: string | null,
+  bodyText: string | null
+): Promise<void> {
+  if (!domain) return;
+
+  // Check if domain is already linked to an insurance company
+  const existingCompany = await db.insuranceCompany.findFirst({
+    where: {
+      senderDomains: { contains: domain },
+      isActive: true,
+    },
+  });
+
+  if (existingCompany) return;
+
+  // Check if suggestion already exists
+  const existingSuggestion = await db.domainSuggestion.findUnique({
+    where: { senderDomain: domain },
+  });
+
+  if (existingSuggestion) {
+    // Update email count
+    const existingSubjects = existingSuggestion.sampleSubjects
+      ? JSON.parse(existingSuggestion.sampleSubjects)
+      : [];
+    const newSubjects = subject
+      ? [...new Set([...existingSubjects, subject])].slice(0, 10)
+      : existingSubjects;
+
+    await db.domainSuggestion.update({
+      where: { senderDomain: domain },
+      data: {
+        emailCount: { increment: 1 },
+        sampleSubjects: JSON.stringify(newSubjects),
+      },
+    });
+    return;
+  }
+
+  // Try to detect company name from email body or signature
+  const detectedCompanyName = detectCompanyName(bodyText, fromName, domain);
+
+  // Check against known insurance domain patterns
+  const domainKnowledge = await db.insuranceDomainKnowledge.findFirst({
+    where: {
+      OR: [
+        { domainPattern: domain },
+        { domainPattern: domain.replace(/^[^.]+\./, "*.") },
+      ],
+      isActive: true,
+    },
+  });
+
+  // Check for similar company
+  let suggestedCompanyId: string | null = null;
+  let suggestedCompanyName: string | null = null;
+
+  if (domainKnowledge) {
+    suggestedCompanyName = domainKnowledge.companyName;
+    const similarCompany = await db.insuranceCompany.findFirst({
+      where: {
+        OR: [
+          { name: { contains: domainKnowledge.companyName } },
+          { shortName: domainKnowledge.shortName || "" },
+        ],
+      },
+    });
+    if (similarCompany) suggestedCompanyId = similarCompany.id;
+  } else if (detectedCompanyName) {
+    suggestedCompanyName = detectedCompanyName;
+    const similarCompany = await db.insuranceCompany.findFirst({
+      where: {
+        OR: [
+          { name: { contains: detectedCompanyName } },
+          { shortName: { contains: detectedCompanyName } },
+        ],
+      },
+    });
+    if (similarCompany) suggestedCompanyId = similarCompany.id;
+  } else {
+    // Extract from domain
+    suggestedCompanyName = extractCompanyFromDomain(domain);
+  }
+
+  // Create suggestion
+  await db.domainSuggestion.create({
+    data: {
+      senderDomain: domain,
+      detectedCompanyName,
+      detectedFromEmail: fromEmail,
+      detectedFromName: fromName,
+      suggestedCompanyId,
+      suggestedCompanyName,
+      confidenceScore: domainKnowledge ? 85 : (detectedCompanyName ? 60 : 40),
+      sampleSubjects: subject ? JSON.stringify([subject]) : null,
+      status: domainKnowledge ? "auto_approved" : "pending",
+    },
+  });
+}
+
+// Detect company name from email content
+function detectCompanyName(
+  bodyText: string | null,
+  fromName: string | null,
+  domain: string
+): string | null {
+  if (!bodyText) return null;
+
+  // Common patterns in insurance emails
+  const patterns = [
+    // Signature patterns
+    /(?:Regards|Thanks|Thank you|Sincerely|Best regards|Kind regards)[,\s]*\n+([A-Za-z\s&]+(?:Insurance|Assurance|Underwriters|Risk|Financial|Services|Pty|Ltd)[A-Za-z\s&]*)/i,
+    // Company header patterns
+    /^([A-Za-z\s&]+(?:Insurance|Assurance|Underwriters|Risk|Financial|Services|Pty|Ltd)[A-Za-z\s&]*)/im,
+    // "From company name" patterns
+    /from[:\s]+([A-Za-z\s&]+(?:Insurance|Assurance))/i,
+    // Copyright footer
+    /©\s*\d{4}\s+([A-Za-z\s&]+(?:Insurance|Assurance|Pty|Ltd))/i,
+    // Disclaimer company name
+    /This (?:email|message) is from ([A-Za-z\s&]+(?:Insurance|Assurance|Pty|Ltd))/i,
+  ];
+
+  for (const pattern of patterns) {
+    const match = bodyText.match(pattern);
+    if (match && match[1]) {
+      const name = match[1].trim();
+      // Filter out common false positives
+      if (
+        name.length > 3 &&
+        name.length < 100 &&
+        !name.toLowerCase().includes("confidential") &&
+        !name.toLowerCase().includes("intended recipient")
+      ) {
+        return name;
+      }
+    }
+  }
+
+  // Extract from sender name if it looks like a company
+  if (fromName) {
+    const companyKeywords = ["insurance", "assurance", "underwriters", "risk", "claims"];
+    for (const keyword of companyKeywords) {
+      if (fromName.toLowerCase().includes(keyword)) {
+        return fromName;
+      }
+    }
+  }
+
+  return null;
+}
+
+// Extract company name from domain
+function extractCompanyFromDomain(domain: string): string {
+  const cleaned = domain
+    .replace(/^(mail\.|email\.|claims\.|notifications\.|noreply\.|no-reply\.)/i, "")
+    .replace(/\.(co\.za|com|co\.uk|org|net)$/i, "");
+
+  return cleaned
+    .split(/[.-]/)
+    .map((part) => part.charAt(0).toUpperCase() + part.slice(1))
+    .join(" ");
+}
+
 // Parse email address to get just the email part
 function parseEmailAddress(address: string | null): string | null {
   if (!address) return null;
@@ -204,6 +372,16 @@ export async function fetchEmails(limit: number = 50): Promise<{
             processingRoute,
           },
         });
+
+        // Check and create domain suggestion for unknown domains
+        const fromName = envelope.from?.[0]?.name || null;
+        await checkAndCreateDomainSuggestion(
+          emailData.fromDomain,
+          emailData.from,
+          fromName,
+          emailData.subject,
+          emailData.bodyText
+        );
 
         fetched++;
       } catch (msgError) {

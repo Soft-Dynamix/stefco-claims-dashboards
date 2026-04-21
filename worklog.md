@@ -152,6 +152,56 @@ Key Files Updated:
 - src/app/api/learning/route.ts - Added feedback stats
 
 ---
+Task ID: 4
+Agent: Main Agent
+Task: Implement auto-learning for insurance companies and domain linking
+
+Work Log:
+- Added DomainSuggestion model for pending domain-to-company mappings:
+  - Tracks detected company names from email content
+  - Confidence scoring for suggestions
+  - Sample subjects for review
+  - Approval/rejection workflow
+- Added CompanyDetectionPattern model for pattern-based detection
+- Added InsuranceDomainKnowledge model with SA insurance companies:
+  - 40+ South African insurance companies seeded
+  - Domain patterns for auto-matching
+  - Short name mappings
+- Created domain suggestions API:
+  - GET: Fetch pending suggestions
+  - POST: Create suggestions from detected domains
+  - PUT: Approve/reject with company linking
+- Created insurance knowledge API:
+  - GET: Query domain knowledge
+  - POST: Seed SA insurance companies
+- Created DomainSuggestionsCard component:
+  - Shows on dashboard when new domains detected
+  - Approve/reject workflow
+  - Link to existing company or create new
+- Updated email poller to detect new domains:
+  - Extracts domain from sender email
+  - Detects company name from signatures/content
+  - Creates suggestions for unknown domains
+  - Auto-approves known SA insurance domains
+
+Stage Summary:
+- Auto-detection of new sender domains from emails
+- Domain-to-company suggestion system with approval workflow
+- 40+ SA insurance company domain patterns seeded
+- Company name detection from email signatures/content
+- Dashboard card for reviewing new domains
+
+Key Files Created:
+- src/app/api/domain-suggestions/route.ts - Domain suggestions API
+- src/app/api/insurance-knowledge/route.ts - Insurance knowledge API
+- src/components/domain-suggestions-card.tsx - Dashboard component
+
+Key Files Updated:
+- prisma/schema.prisma - Added DomainSuggestion, CompanyDetectionPattern, InsuranceDomainKnowledge
+- src/lib/email-poller.ts - Added domain detection on email fetch
+- src/components/sections/dashboard-section.tsx - Added domain suggestions card
+
+---
 ## Current Project Status
 
 **Status:** ✅ Fully Functional - Ready for Production
@@ -173,10 +223,15 @@ Key Files Updated:
 14. ✅ Structured rejection feedback with categories
 15. ✅ Thread detection for follow-up emails
 16. ✅ Learning dashboard with feedback history
+17. ✅ Auto-detection of new sender domains
+18. ✅ Domain-to-company suggestion system
+19. ✅ SA insurance company domain knowledge base
+20. ✅ Company name detection from email signatures
 
 **Pending for Production:**
 - Configure valid IMAP credentials
 - Start email poller background service
 - Configure AI provider API key
+- Restart dev server to pick up new Prisma models (domainSuggestion, insuranceDomainKnowledge)
 
 ---
